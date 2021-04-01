@@ -33,8 +33,12 @@ tuple<const Data, const Data> Calculations::partition(const Data& data, const Qu
 }
 
 float Calculations::info_gain(const Data &true_rows, const Data &false_rows, float current_uncertainty) {
-    const float p = static_cast<float>(true_rows.size()) / (true_rows.size() + false_rows.size());
-    return current_uncertainty - p * gini(true_rows) - (1 - p) * gini(false_rows);
+	const double &true_size = true_rows.size();
+	const double &false_size = false_rows.size();
+    const float p = static_cast<float>(true_size) / (true_size + false_size);
+    const auto &true_counts = class_counts(true_rows);
+	const auto &false_counts = class_counts(false_rows);
+	return current_uncertainty - p * gini(true_counts, true_size) - (1 - p) * gini(false_counts, false_size);
 }
 
 
@@ -42,7 +46,8 @@ tuple<const double, const Question> Calculations::find_best_split(const Data& ro
   double best_gain = 0.0;  // keep track of the best information gain
   auto best_question = Question();  //keep track of the feature / value that produced it
   
-  const float current_uncertainty = gini(rows);
+  const auto &overall_counts = class_counts(rows)
+  const float current_uncertainty = gini(overall_counts, rows.size());
     size_t n_features = rows.back().size() - 1;  //number of columns
 
     #pragma omp parallel for num_threads(5)
@@ -101,7 +106,7 @@ tuple<std::string, double> Calculations::determine_best_threshold_cat(const Data
   return forward_as_tuple(best_thresh, best_loss);
 }
 
-VecS calculations::unique_values(const Data &data, size_t column) {
+VecS Calculations::unique_values(const Data &data, size_t column) {
     VecS unique_vals;
 
     ClassCounter counter;

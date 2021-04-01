@@ -25,7 +25,7 @@ const double gini(const ClassCounter& counts, double N);
 
 float info_gain(const Data &true_rows, const Data &false_rows, float current_uncertainty);
 
-VecS unique_values(const dtree::Data &data, size_t column);
+VecS unique_values(const Data &data, size_t column);
 
 std::tuple<const double, const Question> find_best_split(const Data &rows, const MetaData &meta);
 
