@@ -5,6 +5,8 @@
  */
 
 #include "DecisionTree.hpp"
+#include <future>
+#include <tuple>
 
 using std::make_shared;
 using std::shared_ptr;
@@ -19,7 +21,7 @@ DecisionTree::DecisionTree(const DataReader& dr) : root_(Node()), dr_(dr) {
 
 
 const Node DecisionTree::buildTree(const Data& rows, const MetaData& meta) {
-    auto[gain, question] = calculations::find_best_split(rows);
+    auto[gain, question] = Calculations::find_best_split(rows);
     if (gain == 0.0) {
 		ClassCounter classCounter = Calculations::classCounts(rows);
 		Leaf leaf(classCounter);
@@ -27,7 +29,7 @@ const Node DecisionTree::buildTree(const Data& rows, const MetaData& meta) {
 		return leafNode;
     }
 
-    const auto[true_rows, false_rows] = calculations::partition(rows, question);
+    const auto[true_rows, false_rows] = Calculations::partition(rows, question);
     auto true_branch = std::async(std::launch::async, &DecisionTree::buildTree, this, std::cref(true_rows), std::cref(meta));
     auto false_branch = std::async(std::launch::async, &DecisionTree::buildTree, this, std::cref(false_rows), std::cref(meta));
 

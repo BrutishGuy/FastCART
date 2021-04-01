@@ -7,6 +7,7 @@
 #include <cmath>
 #include <algorithm>
 #include <iterator>
+#include <omp.h>
 #include "Calculations.hpp"
 #include "Utils.hpp"
 
@@ -100,6 +101,21 @@ tuple<std::string, double> Calculations::determine_best_threshold_cat(const Data
   return forward_as_tuple(best_thresh, best_loss);
 }
 
+VecS calculations::unique_values(const Data &data, size_t column) {
+    VecS unique_vals;
+
+    ClassCounter counter;
+    for (const auto &rows: data) {
+        const string &decision = rows.at(column);
+        counter[decision] += 0;
+    }
+
+    unique_vals.reserve(counter.size());
+
+    std::transform(begin(counter), std::end(counter), std::back_inserter(unique_vals),
+                   [](const auto &kv) { return kv.first; });
+    return unique_vals;
+}
 
 const ClassCounter Calculations::classCounts(const Data& data) {
   ClassCounter counter;
