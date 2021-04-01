@@ -46,8 +46,8 @@ tuple<const double, const Question> Calculations::find_best_split(const Data& ro
   double best_gain = 0.0;  // keep track of the best information gain
   auto best_question = Question();  //keep track of the feature / value that produced it
   
-  const auto &overall_counts = classCounts(rows)
-  const float &current_uncertainty = gini(overall_counts, rows.size());
+  const auto &overall_counts = classCounts(rows);
+  const float current_uncertainty = gini(overall_counts, rows.size());
     size_t n_features = rows.back().size() - 1;  //number of columns
 
     #pragma omp parallel for num_threads(5)
