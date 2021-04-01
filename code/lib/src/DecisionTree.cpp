@@ -25,7 +25,6 @@ DecisionTree::DecisionTree(const DataReader &dr, const std::vector<size_t> &samp
 
     Data sample_data;
     sample_data.reserve(samples.size());
-    Calculations::generateSampleData(dr_.trainData(), samples, sample_data);
     for (auto index : samples) {
         sample_data.emplace_back(std::move(dr_.trainData().at(index)));
     }
