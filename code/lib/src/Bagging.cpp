@@ -32,9 +32,8 @@ void Bagging::buildBag() {
 			for (int i = 0; i < dr_.trainData().size(); i++) {
 				samples.emplace_back(std::move(uniform_sampler(random_number_generator)));
 			}
-			DecisionTree dt(dr_, samples);
-    dt.test();
-	 
+			DecisionTree dt = DecisionTree(dr_, samples);
+    learners_.push_back(dt);
     auto nanoseconds = boost::chrono::nanoseconds(timer.elapsed().wall);
     auto seconds = boost::chrono::duration_cast<boost::chrono::seconds>(nanoseconds);
     timings.push_back(seconds.count());
