@@ -41,7 +41,7 @@ tuple<const double, const Question> Calculations::find_best_split(const Data& ro
   const float current_uncertainty = gini(overall_counts, rows.size());
 	size_t n_features = rows.back().size() - 1;  //number of columns
 	
-	//#pragma omp parallel for num_threads(5)
+	#pragma omp parallel for num_threads(5)
 	for (size_t column = 0; column < n_features; column++) {
 		std::string colType = meta.columnTypes[column];
 		
@@ -54,9 +54,9 @@ tuple<const double, const Question> Calculations::find_best_split(const Data& ro
 		tuple<std::string, double> bestThreshAndLoss;
 		//std::cout << "Whoop whoop0" << std::endl;
 		if (colType.compare("categorical") == 0) {
-			std::tie(candidateThresh, candidateLoss, candidateTrueSize, candidateFalseSize, candidateTrueCounts, candidateFalseCounts) = determine_best_threshold_cat(rows, column);
+			auto[candidateThresh, candidateLoss, candidateTrueSize, candidateFalseSize, candidateTrueCounts, candidateFalseCounts] = determine_best_threshold_cat(rows, column);
 		} else {
-			std::tie(candidateThresh, candidateLoss, candidateTrueSize, candidateFalseSize, candidateTrueCounts, candidateFalseCounts) = determine_best_threshold_numeric(rows, column);
+			auto[candidateThresh, candidateLoss, candidateTrueSize, candidateFalseSize, candidateTrueCounts, candidateFalseCounts] = determine_best_threshold_numeric(rows, column);
 		}
 		//std::cout << "Whoop whoop1" << std::endl;
 
@@ -68,7 +68,7 @@ tuple<const double, const Question> Calculations::find_best_split(const Data& ro
 
 		const auto &candidateGain = info_gain(candidateTrueCounts, candidateFalseCounts, candidateTrueSize, candidateFalseSize, current_uncertainty);
 		//std::cout << "Whoop whoop2" << std::endl;
-		//#pragma omp critical
+		#pragma omp critical
 		{
 			if (candidateGain >= bestGain) {
 				const Question q(column, candidateThresh);
