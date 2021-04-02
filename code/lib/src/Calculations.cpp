@@ -47,18 +47,20 @@ tuple<const double, const Question> Calculations::find_best_split(const Data& ro
 		std::string colType = meta.columnTypes[column];
 
 		tuple<std::string, double> bestThreshAndLoss;
-		if (colType == 'categorical') {
+		if (colType.compare("categorical") == 0) {
 			bestThreshAndLoss = determine_best_threshold_cat(rows, column);
 		} else {
 			bestThreshAndLoss = determine_best_threshold_numeric(rows, column);
 		}
 
-		std::string candidateThresh = std::get<0>(bestThreshAndLoss);
-		double candidateTrueSize = std::get<2>(bestThreshAndLoss);
-		double candidateFalseSize = std::get<3>(bestThreshAndLoss);
-		ClassCounter candidateTrueCounts = std::get<4>(bestThreshAndLoss);
-		ClassCounter candidateFalseCounts = std::get<5>(bestThreshAndLoss);
-
+		std::string candidateThresh;
+		double candidateLoss;
+		double candidateTrueSize;
+		double candidateFalseSize;
+		ClassCounter candidateTrueCounts;
+		ClassCounter candidateFalseCounts;
+		std::tie(candidateThresh, candidateLoss, candidateTrueSize, candidateFalseSize, candidateTrueCounts, candidateFalseCounts) = bestThreshAndLoss;
+		
 		if (candidateTrueSize == 0 || candidateFalseSize == 0)
 				continue;
 
@@ -113,13 +115,11 @@ tuple<std::string, double> Calculations::determine_best_threshold_numeric(const 
   }
 	
 	//tracker variables 
-	const double bestLoss;
-	std::string bestThresh;
 	double bestTrueSize;
 	double bestFalseSize;
 	ClassCounter bestTrueCounts;
 	ClassCounter bestFalseCounts;
-	std::string currentFeatureValue = sortData.front().at(0);
+	std::string currentFeatureValue = sortedData.front().at(0);
   for (std::vector<std::string> row : sortedData) {
         if (row.at(0) == currentFeatureValue) {
 					// add to the class counter where relevant
@@ -171,8 +171,6 @@ tuple<std::string, double> Calculations::determine_best_threshold_cat(const Data
 	ClassCounterPerCategory incrementalFalseClassCountsPerCategory;
 	
 	//tracker variables 
-	const double bestLoss;
-	std::string bestThresh;
 	double bestTrueSize;
 	double bestFalseSize;
 	ClassCounter bestTrueCounts;
@@ -203,20 +201,20 @@ tuple<std::string, double> Calculations::determine_best_threshold_cat(const Data
 		
 	// now we iterate over each class instance (parallelizable) and determine which class
 	// holds the minimal gini update value for the information gain calculation later
-	for (const auto& [category, catSize]: totalCategoryCounts) {
+	for (const auto& [category, catSize]: incrementalCategoryCounts) {
 		// first compare change in gini value - we don't compare IG, since this is constance to S
 		// rather we want the minimal gini value for the split such that IG(S) - IG(S_new) is maximal
 		
 		ClassCounter incrementalTrueClassCounts = incrementalTrueClassCountsPerCategory[category];
 		ClassCounter incrementalFalseClassCounts = incrementalFalseClassCountsPerCategory[category];
-		double totalTrue = incrementalCategoryCounts[category];
+		double totalTrue = catSize;
 		const double trueGini = gini(incrementalTrueClassCounts, totalTrue);
 		const double falseGini = gini(incrementalFalseClassCounts, (totalSize-totalTrue));
 		const double currentGini = (trueGini * totalTrue + falseGini * (totalSize-totalTrue)) / totalSize;
 
 		if (currentGini < bestLoss) {
 				bestLoss = currentGini;
-				bestThresh = row.at(0);
+				bestThresh = category;
 				bestTrueSize = totalTrue;
 				bestFalseSize = (totalSize-totalTrue);
 				bestTrueCounts = incrementalTrueClassCounts;

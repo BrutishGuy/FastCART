@@ -24,9 +24,7 @@ std::tuple<const Data, const Data> partition(const Data &data, const Question &q
 
 const double gini(const ClassCounter& counts, double N);
 
-float info_gain(const Data &true_rows, const Data &false_rows, float current_uncertainty);
-
-VecS unique_values(const Data &data, size_t column);
+float info_gain(const ClassCounter &true_counts, const ClassCounter &false_counts, double &true_size, double &false_size, float current_uncertainty);
 
 std::tuple<const double, const Question> find_best_split(const Data &rows, const MetaData &meta);
 
@@ -34,8 +32,11 @@ std::tuple<std::string, double> determine_best_threshold_numeric(const Data &dat
 
 std::tuple<std::string, double> determine_best_threshold_cat(const Data &data, int col);
 
-
 const ClassCounter classCounts(const Data &data);
+
+const Data Calculations::sort_numeric_data(const Data &data, int col);
+
+bool Calculations::comparator(VecS &row1, VecS &row2);
 
 } // namespace Calculations
 
