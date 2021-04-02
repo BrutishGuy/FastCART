@@ -141,7 +141,7 @@ std::tuple<std::string, double, double, double, ClassCounter, ClassCounter> Calc
 							bestFalseSize = (totalSize-totalTrue);
 							bestTrueCounts = incrementalTrueClassCounts;
 							bestFalseCounts = incrementalFalseClassCounts;
-							if (IsAlmostEqual(bestLoss, 0))
+							if (IsAlmostEqual(bestLoss, 0.0))
 									break;
 					}
 					
@@ -218,7 +218,7 @@ std::tuple<std::string, double, double, double, ClassCounter, ClassCounter> Calc
 				bestFalseSize = (totalSize-totalTrue);
 				bestTrueCounts = incrementalTrueClassCounts;
 				bestFalseCounts = incrementalFalseClassCounts;
-				if (IsAlmostEqual(bestLoss, 0))
+				if (IsAlmostEqual(bestLoss, 0.0))
 						break;
 		}
 	}
