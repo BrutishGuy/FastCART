@@ -70,7 +70,7 @@ void consumer(void)
 				std::tie(candidateGain, candidateColumn, candidateThresh) = value;
 				if (candidateGain >= bestGainOverall) {
 					bestGainOverall = candidateGain;
-					bestThreshOverall = candidateQuestion;
+					bestThreshOverall = candidateThresh;
 					bestColumnOverall = candidateColumn;
 				};
 			}
@@ -80,7 +80,7 @@ void consumer(void)
 			std::tie(candidateGain, candidateColumn, candidateThresh) = value;
 			if (candidateGain >= bestGainOverall) {
 				bestGainOverall = candidateGain;
-				bestThreshOverall = candidateQuestion;
+				bestThreshOverall = candidateThresh;
 				bestColumnOverall = candidateColumn;
 			};
 		}
