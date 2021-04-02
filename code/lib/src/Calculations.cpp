@@ -57,7 +57,7 @@ tuple<const double, const Question> Calculations::find_best_split(const Data& ro
 		} else {
 			std::tie(candidateThresh, candidateLoss, candidateTrueSize, candidateFalseSize, candidateTrueCounts, candidateFalseCounts) = determine_best_threshold_numeric(rows, column);
 		}
-
+		std::cout << "Whoop whoop" << std::endl
 
 		// = bestThreshAndLoss;
 		if (candidateTrueSize == 0 || candidateFalseSize == 0)
