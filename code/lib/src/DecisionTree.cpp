@@ -35,7 +35,7 @@ DecisionTree::DecisionTree(const DataReader &dr, const std::vector<size_t> &samp
 
 const Node DecisionTree::buildTree(const Data& rows, const MetaData& meta) {
     auto[gain, question] = Calculations::find_best_split(rows, meta);
-    if (gain == 0.0) {
+    if (IsAlmostZero(gain, 0.0)) {
 		ClassCounter classCounter = Calculations::classCounts(rows);
 		Leaf leaf(classCounter);
 		Node leafNode(leaf);
