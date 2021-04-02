@@ -30,6 +30,10 @@ struct MetaData {
   VecS columnTypes;   // types include 'categorical', 'ordinal', 'numeric'
   
 };
+
+
+template <typename T>
+typename std::enable_if<!std::numeric_limits<T>::is_integer, bool>::type
 IsAlmostEqual(T x, T y, int ulp = 2)
 {
     return std::fabs(x - y) < std::numeric_limits<T>::epsilon() * std::fabs(x + y) * ulp
