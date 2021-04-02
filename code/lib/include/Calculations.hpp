@@ -18,12 +18,6 @@
 using ClassCounter = std::unordered_map<std::string, int>;
 using ClassCounterPerCategory = std::unordered_map<std::string, ClassCounter>;  // map<featureValue, classCounter>
 
-extern boost::lockfree::queue<std::tuple<double gain, size_t col, std::string thresh>> queue;
-
-extern boost::atomic<bool> done;
-extern boost::atomic<double> bestGainOverall;
-extern boost::atomic<size_t> bestColumnOverall;
-extern boost::atomic<std::string> bestThreshOverall;
 
 namespace Calculations {
 
@@ -44,10 +38,6 @@ const ClassCounter classCounts(const Data &data);
 const Data sort_numeric_data(const Data &data, int col);
 
 bool comparator(VecS &row1, VecS &row2);
-
-void consumer(void);
-
-void producer(Data &data, int col);
 
 } // namespace Calculations
 
