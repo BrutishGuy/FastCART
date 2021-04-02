@@ -44,15 +44,28 @@ const Node DecisionTree::buildTree(const Data& rows, const MetaData& meta) {
 		Node leafNode(leaf);
 		return leafNode;
     }
-		std::cout << "HUR DUR build 1" << std::endl;
+		//std::cout << "HUR DUR build 1" << std::endl;
     const auto[true_rows, false_rows] = Calculations::partition(rows, question);
     //auto true_branch = std::async(std::launch::async, &DecisionTree::buildTree, this, std::cref(true_rows), std::cref(meta));
     //auto false_branch = std::async(std::launch::async, &DecisionTree::buildTree, this, std::cref(false_rows), std::cref(meta));
-		auto true_branch = buildTree(true_rows, meta);
-    auto false_branch = buildTree(false_rows, meta);
+		//auto true_branch = buildTree(true_rows, meta);
+    //auto false_branch = buildTree(false_rows, meta);
+		Node *true_branch = new Node;
+		Node *false_branch = new Node;
+		std::thread buildTrueTree([this, &true_rows, &meta, true_branch]() {
+				*true_branch = buildTree(true_rows, meta);
+		});
+		std::thread buildFalseTree([this, &false_rows, &meta, false_branch]() {
+				*false_branch = buildTree(false_rows, meta);
+		});
 
-		//std::cout << "HUR DUR build END" << std::endl;
-    return Node(true_branch, false_branch, question);
+		buildTrueTree.join();
+		buildFalseTree.join();
+
+		Node res = Node(*true_branch, *false_branch, question);
+		delete true_branch;
+		delete false_branch;
+		return res;
 
 }
 
