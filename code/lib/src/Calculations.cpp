@@ -53,9 +53,9 @@ tuple<const double, const Question> Calculations::find_best_split(const Data& ro
 		ClassCounter candidateFalseCounts;
 		tuple<std::string, double> bestThreshAndLoss;
 		if (colType.compare("categorical") == 0) {
-			std::tie(candidateThresh, candidateLoss, candidateTrueSize, candidateFalseSize, candidateTrueCounts, candidateFalseCounts) = determine_best_threshold_cat(rows, column);
+			auto [candidateThresh, candidateLoss, candidateTrueSize, candidateFalseSize, candidateTrueCounts, candidateFalseCounts] = determine_best_threshold_cat(rows, column);
 		} else {
-			std::tie(candidateThresh, candidateLoss, candidateTrueSize, candidateFalseSize, candidateTrueCounts, candidateFalseCounts) = determine_best_threshold_numeric(rows, column);
+			auto [candidateThresh, candidateLoss, candidateTrueSize, candidateFalseSize, candidateTrueCounts, candidateFalseCounts] = determine_best_threshold_numeric(rows, column);
 		}
 
 
