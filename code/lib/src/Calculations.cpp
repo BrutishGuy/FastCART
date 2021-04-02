@@ -41,7 +41,7 @@ tuple<const double, const Question> Calculations::find_best_split(const Data& ro
   const float current_uncertainty = gini(overall_counts, rows.size());
 	size_t n_features = rows.back().size() - 1;  //number of columns
 	
-	#pragma omp parallel for num_threads(5)
+	//#pragma omp parallel for num_threads(5)
 	for (size_t column = 0; column < n_features; column++) {
 		std::string colType = meta.columnTypes[column];
 		
@@ -53,9 +53,9 @@ tuple<const double, const Question> Calculations::find_best_split(const Data& ro
 		ClassCounter candidateFalseCounts;
 		tuple<std::string, double> bestThreshAndLoss;
 		if (colType.compare("categorical") == 0) {
-			auto [candidateThresh, candidateLoss, candidateTrueSize, candidateFalseSize, candidateTrueCounts, candidateFalseCounts] = determine_best_threshold_cat(rows, column);
+			std::tie(candidateThresh, candidateLoss, candidateTrueSize, candidateFalseSize, candidateTrueCounts, candidateFalseCounts) = determine_best_threshold_cat(rows, column);
 		} else {
-			auto [candidateThresh, candidateLoss, candidateTrueSize, candidateFalseSize, candidateTrueCounts, candidateFalseCounts] = determine_best_threshold_numeric(rows, column);
+			std::tie(candidateThresh, candidateLoss, candidateTrueSize, candidateFalseSize, candidateTrueCounts, candidateFalseCounts) = determine_best_threshold_numeric(rows, column);
 		}
 
 
@@ -66,7 +66,7 @@ tuple<const double, const Question> Calculations::find_best_split(const Data& ro
 
 		const auto &candidateGain = info_gain(candidateTrueCounts, candidateFalseCounts, candidateTrueSize, candidateFalseSize, current_uncertainty);
 
-		#pragma omp critical
+		//#pragma omp critical
 		{
 			if (candidateGain >= bestGain) {
 				const Question q(column, candidateThresh);
