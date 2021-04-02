@@ -29,63 +29,9 @@ using std::unordered_map;
 boost::lockfree::queue<std::tuple<double gain, size_t col, std::string thresh>> queue(128);
 
 boost::atomic<bool> done (false);
-boost::atomic<double> bestGainOverall;
-boost::atomic<size_t> bestColumnOverall;
-boost::atomic<std::string> bestThreshOverall;
-
-void producer(Data &data, size_t col)
-{
-    std::string colType = meta.columnTypes[col];
-		const auto &overall_counts = classCounts(rows);
-		const float current_uncertainty = gini(overall_counts, rows.size());
-		std::string candidateThresh;
-		double candidateLoss;
-		double candidateTrueSize;
-		double candidateFalseSize;
-		ClassCounter candidateTrueCounts;
-		ClassCounter candidateFalseCounts;
-		tuple<std::string, double> bestThreshAndLoss;
-		if (colType.compare("categorical") == 0) {
-			auto [candidateThresh, candidateLoss, candidateTrueSize, candidateFalseSize, candidateTrueCounts, candidateFalseCounts] = determine_best_threshold_cat(rows, column);
-		} else {
-			auto [candidateThresh, candidateLoss, candidateTrueSize, candidateFalseSize, candidateTrueCounts, candidateFalseCounts] = determine_best_threshold_numeric(rows, column);
-		}
-		
-		if (candidateTrueSize == 0 || candidateFalseSize == 0)
-				continue;
-
-		const auto &candidateGain = info_gain(candidateTrueCounts, candidateFalseCounts, candidateTrueSize, candidateFalseSize, current_uncertainty);
-		while (!queue.push(std::tuple(candidateGain, col, candidateThresh)))
-			;
-}
-
-void consumer(void)
-{
-		double candidateGain = 0.0;
-		std::string candidateThresh;
-		size_t candidateColumn;
-    std::tuple<double, size_t, Question> value;
-    while (!done) {
-			while (queue.pop(value)) {
-				std::tie(candidateGain, candidateColumn, candidateThresh) = value;
-				if (candidateGain >= bestGainOverall) {
-					bestGainOverall = candidateGain;
-					bestThreshOverall = candidateThresh;
-					bestColumnOverall = candidateColumn;
-				};
-			}
-    }
-
-    while (queue.pop(value)) {
-			std::tie(candidateGain, candidateColumn, candidateThresh) = value;
-			if (candidateGain >= bestGainOverall) {
-				bestGainOverall = candidateGain;
-				bestThreshOverall = candidateThresh;
-				bestColumnOverall = candidateColumn;
-			};
-		}
-
-}
+boost::atomic<double> bestGainOverall (0.0);
+boost::atomic<size_t> bestColumnOverall (0);
+boost::atomic<std::string> bestThreshOverall (" ");
 
 
 tuple<const Data, const Data> Calculations::partition(const Data& data, const Question& q) {
@@ -318,4 +264,57 @@ const Data Calculations::sort_numeric_data(const Data &data, int col) {
 bool Calculations::comparator(VecS &row1, VecS &row2) {
     return std::stoi(row1.front()) > std::stoi(row2.front());
 }
+
+
+void producer(Data &data, size_t col)
+{
+    std::string colType = meta.columnTypes[col];
+		const auto &overall_counts = classCounts(rows);
+		const float current_uncertainty = gini(overall_counts, rows.size());
+		std::string candidateThresh;
+		double candidateLoss;
+		double candidateTrueSize;
+		double candidateFalseSize;
+		ClassCounter candidateTrueCounts;
+		ClassCounter candidateFalseCounts;
+		tuple<std::string, double> bestThreshAndLoss;
+		if (colType.compare("categorical") == 0) {
+			auto [candidateThresh, candidateLoss, candidateTrueSize, candidateFalseSize, candidateTrueCounts, candidateFalseCounts] = determine_best_threshold_cat(rows, column);
+		} else {
+			auto [candidateThresh, candidateLoss, candidateTrueSize, candidateFalseSize, candidateTrueCounts, candidateFalseCounts] = determine_best_threshold_numeric(rows, column);
+		}
+
+		const auto &candidateGain = info_gain(candidateTrueCounts, candidateFalseCounts, candidateTrueSize, candidateFalseSize, current_uncertainty);
+		while (!queue.push(std::tuple(candidateGain, col, candidateThresh)))
+			;
+}
+
+void consumer(void)
+{
+		double candidateGain = 0.0;
+		std::string candidateThresh;
+		size_t candidateColumn;
+    std::tuple<double, size_t, Question> value;
+    while (!done) {
+			while (queue.pop(value)) {
+				std::tie(candidateGain, candidateColumn, candidateThresh) = value;
+				if (candidateGain >= bestGainOverall) {
+					bestGainOverall = candidateGain;
+					bestThreshOverall = candidateThresh;
+					bestColumnOverall = candidateColumn;
+				};
+			}
+    }
+
+    while (queue.pop(value)) {
+			std::tie(candidateGain, candidateColumn, candidateThresh) = value;
+			if (candidateGain >= bestGainOverall) {
+				bestGainOverall = candidateGain;
+				bestThreshOverall = candidateThresh;
+				bestColumnOverall = candidateColumn;
+			};
+		}
+
+}
+
 

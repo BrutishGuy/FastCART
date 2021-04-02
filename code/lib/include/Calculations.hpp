@@ -18,6 +18,13 @@
 using ClassCounter = std::unordered_map<std::string, int>;
 using ClassCounterPerCategory = std::unordered_map<std::string, ClassCounter>;  // map<featureValue, classCounter>
 
+extern boost::lockfree::queue<std::tuple<double gain, size_t col, std::string thresh>> queue;
+
+extern boost::atomic<bool> done;
+extern boost::atomic<double> bestGainOverall;
+extern boost::atomic<size_t> bestColumnOverall;
+extern boost::atomic<std::string> bestThreshOverall;
+
 namespace Calculations {
 
 std::tuple<const Data, const Data> partition(const Data &data, const Question &q);
