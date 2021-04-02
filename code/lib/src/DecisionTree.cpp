@@ -52,7 +52,7 @@ const Node DecisionTree::buildTree(const Data& rows, const MetaData& meta) {
     auto false_branch = buildTree(false_rows, meta);
 
 		std::cout << "HUR DUR build END" << std::endl;
-    return Node(true_branch.get(), false_branch.get(), question);
+    return Node(true_branch, false_branch, question);
 
 }
 
