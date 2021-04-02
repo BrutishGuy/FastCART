@@ -36,6 +36,7 @@ DecisionTree::DecisionTree(const DataReader &dr, const std::vector<size_t> &samp
 }
 
 const Node DecisionTree::buildTree(const Data& rows, const MetaData& meta) {
+		std::cout << "HUR DUR build INIT" << std::endl;
     auto[gain, question] = Calculations::find_best_split(rows, meta);
     if (IsAlmostEqual(gain, 0.0)) {
 		ClassCounter classCounter = Calculations::classCounts(rows);
@@ -43,11 +44,11 @@ const Node DecisionTree::buildTree(const Data& rows, const MetaData& meta) {
 		Node leafNode(leaf);
 		return leafNode;
     }
-
+		std::cout << "HUR DUR build 1" << std::endl;
     const auto[true_rows, false_rows] = Calculations::partition(rows, question);
     auto true_branch = std::async(std::launch::async, &DecisionTree::buildTree, this, std::cref(true_rows), std::cref(meta));
     auto false_branch = std::async(std::launch::async, &DecisionTree::buildTree, this, std::cref(false_rows), std::cref(meta));
-
+		std::cout << "HUR DUR build END" << std::endl;
     return Node(true_branch.get(), false_branch.get(), question);
 
 }

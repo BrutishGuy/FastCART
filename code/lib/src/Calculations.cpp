@@ -36,7 +36,7 @@ tuple<const Data, const Data> Calculations::partition(const Data& data, const Qu
 tuple<const double, const Question> Calculations::find_best_split(const Data& rows, const MetaData& meta) {
   double bestGain = 0.0;  // keep track of the best information gain
   auto bestQuestion = Question();  //keep track of the feature / value that produced it
-  
+  std::cout << "Whoop whoop INIT" << std::endl;
   const auto &overall_counts = classCounts(rows);
   const float current_uncertainty = gini(overall_counts, rows.size());
 	size_t n_features = rows.back().size() - 1;  //number of columns
@@ -78,7 +78,7 @@ tuple<const double, const Question> Calculations::find_best_split(const Data& ro
 		}
 		std::cout << "Whoop whoop3" << std::endl;
 	}
-
+   std::cout << "Whoop whoop END" << std::endl;
   return forward_as_tuple(bestGain, bestQuestion);
 }
 
