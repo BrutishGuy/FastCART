@@ -91,6 +91,7 @@ bool DataReader::parseHeaderLine(const std::string &line, MetaData &meta, bool &
         && strcasecmp(s.substr(s.size() - len, len).c_str(), " NUMERIC") == 0) {
       s = s.substr(0, s.size() - len);
       meta.labels.push_back(s);
+	  meta.columnTypes.push_back('ordinal');
       return true;
     }
 
@@ -99,6 +100,7 @@ bool DataReader::parseHeaderLine(const std::string &line, MetaData &meta, bool &
         && strcasecmp(s.substr(s.size() - len, len).c_str(), " REAL") == 0) {
       s = s.substr(0, s.size() - len);
       meta.labels.push_back(s);
+	  meta.columnTypes.push_back('numeric');
       return true;
     }
 
@@ -106,6 +108,7 @@ bool DataReader::parseHeaderLine(const std::string &line, MetaData &meta, bool &
       int pos = s.find_last_of("{");
       s = s.substr(0, pos);
       meta.labels.push_back(s);
+	  meta.columnTypes.push_back('categorical');
       return true;
     }
     return true;

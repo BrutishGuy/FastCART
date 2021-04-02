@@ -22,8 +22,13 @@
 using VecS = std::vector<std::string>;
 using Data = std::vector<std::vector<std::string>>;
 struct MetaData {
+  // class labels
   VecS labels;
   // Here you can store additional meta data
+  
+  // column types for easier looping later on
+  VecS columnTypes;   // types include 'categorical', 'ordinal', 'numeric'
+  
 };
 
 

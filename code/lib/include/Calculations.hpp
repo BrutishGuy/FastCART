@@ -16,6 +16,7 @@
 #include "Utils.hpp"
 
 using ClassCounter = std::unordered_map<std::string, int>;
+using ClassCounterPerCategory = std::unordered_map<std::string, ClassCounter>;  // map<featureValue, classCounter>
 
 namespace Calculations {
 

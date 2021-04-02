@@ -32,95 +32,203 @@ tuple<const Data, const Data> Calculations::partition(const Data& data, const Qu
   return forward_as_tuple(true_rows, false_rows);
 }
 
-float Calculations::info_gain(const Data &true_rows, const Data &false_rows, float current_uncertainty) {
-	const double &true_size = true_rows.size();
-	const double &false_size = false_rows.size();
-    const float p = static_cast<float>(true_size) / (true_size + false_size);
-    const auto &true_counts = classCounts(true_rows);
-	const auto &false_counts = classCounts(false_rows);
-	return current_uncertainty - p * gini(true_counts, true_size) - (1 - p) * gini(false_counts, false_size);
-}
-
 
 tuple<const double, const Question> Calculations::find_best_split(const Data& rows, const MetaData& meta) {
-  double best_gain = 0.0;  // keep track of the best information gain
-  auto best_question = Question();  //keep track of the feature / value that produced it
+  double bestGain = 0.0;  // keep track of the best information gain
+  auto bestQuestion = Question();  //keep track of the feature / value that produced it
   
   const auto &overall_counts = classCounts(rows);
   const float current_uncertainty = gini(overall_counts, rows.size());
-    size_t n_features = rows.back().size() - 1;  //number of columns
-
-    #pragma omp parallel for num_threads(5)
-    for (size_t column = 0; column < n_features; column++) {
-        const auto values = unique_values(rows, column);
-
-
-        for (const auto &val: values) {
-            const Question q(column, val);
-
-            const auto& [true_rows, false_rows] = partition(rows, q);
-
-            if (true_rows.empty() || false_rows.empty())
-                continue;
-
-            const auto &gain = info_gain(true_rows, false_rows, current_uncertainty);
-
-            #pragma omp critical
-            {
-                if (gain >= best_gain) {
-                    best_gain = gain;
-                    best_question = q;
-                }
-            }
-        }
-    }
+	size_t n_features = rows.back().size() - 1;  //number of columns
+	double dataSize = rows.size();
 	
-  return forward_as_tuple(best_gain, best_question);
+	#pragma omp parallel for num_threads(5)
+	for (size_t column = 0; column < n_features; column++) {
+		std::string colType = meta.columnTypes[column];
+
+		tuple<std::string, double> bestThreshAndLoss;
+		if (colType == 'categorical') {
+			bestThreshAndLoss = determine_best_threshold_cat(rows, column);
+		} else {
+			bestThreshAndLoss = determine_best_threshold_numeric(rows, column);
+		}
+
+		std::string candidateThresh = std::get<0>(bestThreshAndLoss);
+		double candidateTrueSize = std::get<2>(bestThreshAndLoss);
+		double candidateFalseSize = std::get<3>(bestThreshAndLoss);
+		ClassCounter candidateTrueCounts = std::get<4>(bestThreshAndLoss);
+		ClassCounter candidateFalseCounts = std::get<5>(bestThreshAndLoss);
+
+		if (candidateTrueSize == 0 || candidateFalseSize == 0)
+				continue;
+
+		const auto &candidateGain = info_gain(candidateTrueCounts, candidateFalseCounts, candidateTrueSize, candidateFalseSize, current_uncertainty);
+
+		#pragma omp critical
+		{
+			if (candidateGain >= bestGain) {
+				const Question q(column, candidateThresh);
+				bestGain = candidateGain;
+				bestQuestion = q;
+			}
+		}
+	}
+
+  return forward_as_tuple(bestGain, bestQuestion);
 }
 
 const double Calculations::gini(const ClassCounter& counts, double N) {
   double impurity = 1.0;
   
   for (const auto& [decision, freq]: counts) {
-        double prob_of_lbl = freq / N;
-        impurity -= std::pow(prob_of_lbl, 2.0f);
-    }
+		double prob_of_lbl = freq / N;
+		impurity -= std::pow(prob_of_lbl, 2.0f);
+  }
 
-	
   return impurity;
 }
 
-tuple<std::string, double> Calculations::determine_best_threshold_numeric(const Data& data, int col) {
-  double best_loss = std::numeric_limits<float>::infinity();
-  std::string best_thresh;
+float Calculations::info_gain(const ClassCounter &true_counts, const ClassCounter &false_counts, double &true_size, double &false_size, float current_uncertainty) {
+	const float p = static_cast<float>(true_size) / (true_size + false_size);
+	return current_uncertainty - p * gini(true_counts, true_size) - (1 - p) * gini(false_counts, false_size);
+}
 
-  //TODO: find the best split value for a discrete ordinal feature
-  return forward_as_tuple(best_thresh, best_loss);
+
+tuple<std::string, double> Calculations::determine_best_threshold_numeric(const Data& data, int col) {
+  double bestLoss = std::numeric_limits<float>::infinity();
+  std::string bestThresh;
+	double totalSize = data.size();
+	double totalTrue = 0;
+	
+	ClassCounter totalClassCounts = classCounts(data);
+	ClassCounter incrementalTrueClassCounts;
+	ClassCounter incrementalFalseClassCounts;
+	
+  Data sortedData = sort_numeric_data(data, col);
+	double current_uncertainty = gini(totalClassCounts, totalSize);
+
+	for (const auto& [decision, freq]: totalClassCounts) {
+		incrementalTrueClassCounts[decision] = 0;
+		incrementalFalseClassCounts[decision] = freq;
+  }
+	
+	//tracker variables 
+	const double bestLoss;
+	std::string bestThresh;
+	double bestTrueSize;
+	double bestFalseSize;
+	ClassCounter bestTrueCounts;
+	ClassCounter bestFalseCounts;
+	std::string currentFeatureValue = sortData.front().at(0);
+  for (std::vector<std::string> row : sortedData) {
+        if (row.at(0) == currentFeatureValue) {
+					// add to the class counter where relevant
+          incrementalTrueClassCounts.at(row.back())++;
+					incrementalFalseClassCounts.at(row.back())--;
+					totalTrue += 1;
+        } else {
+					// first compare change in gini value - we don't compare IG, since this is constance to S
+					// rather we want the minimal gini value for the split such that IG(S) - IG(S_new) is maximal
+					
+					const double trueGini = gini(incrementalTrueClassCounts, totalTrue);
+					const double falseGini = gini(incrementalFalseClassCounts, (totalSize-totalTrue));
+					const double currentGini = (trueGini * totalTrue + falseGini * (totalSize-totalTrue)) / totalSize;
+
+					if (currentGini < bestLoss) {
+							bestLoss = currentGini;
+							bestThresh = row.at(0);
+							bestTrueSize = totalTrue;
+							bestFalseSize = (totalSize-totalTrue);
+							bestTrueCounts = incrementalTrueClassCounts;
+							bestFalseCounts = incrementalFalseClassCounts;
+							if (bestLoss == 0)
+									break;
+					}
+					
+					// then add to the class counter where relevant
+					incrementalTrueClassCounts.at(row.back())++;
+					incrementalFalseClassCounts.at(row.back())--;	
+
+					// update the current feature value being tracked against
+					currentFeatureValue = row.at(0);
+        }
+  }
+		
+  return forward_as_tuple(bestThresh, bestLoss, bestTrueSize, bestFalseSize, bestTrueCounts, bestFalseCounts);
 }
 
 tuple<std::string, double> Calculations::determine_best_threshold_cat(const Data& data, int col) {
-  double best_loss = std::numeric_limits<float>::infinity();
-  std::string best_thresh;
+  double bestLoss = std::numeric_limits<float>::infinity();
+  std::string bestThresh;
 
-  //TODO: find the best split value for a categorical feature
-  return forward_as_tuple(best_thresh, best_loss);
+  ClassCounter totalClassCounts = classCounts(data);
+	double totalSize = data.size();
+	double current_uncertainty = gini(totalClassCounts, totalSize);
+	
+	// instantiate here
+	ClassCounter incrementalCategoryCounts;
+	ClassCounterPerCategory incrementalTrueClassCountsPerCategory;
+	ClassCounterPerCategory incrementalFalseClassCountsPerCategory;
+	
+	//tracker variables 
+	const double bestLoss;
+	std::string bestThresh;
+	double bestTrueSize;
+	double bestFalseSize;
+	ClassCounter bestTrueCounts;
+	ClassCounter bestFalseCounts;
+	
+  for (std::vector<std::string> row : data) {
+		std::string decision = row.at(col);
+		std::string outcome = row.back();
+    if (incrementalCategoryCounts.find(decision) != std::end(incrementalCategoryCounts)) {
+			incrementalCategoryCounts.at(decision)++;
+			incrementalTrueClassCountsPerCategory[decision][outcome]++;
+			incrementalFalseClassCountsPerCategory[decision][outcome]--;
+    } else {
+			incrementalCategoryCounts[decision] += 1;
+			ClassCounter incrementalTrueClassCounts;
+			ClassCounter incrementalFalseClassCounts;
+			for (const auto& [decision, freq]: totalClassCounts) {
+				incrementalTrueClassCounts[decision] = 0;
+				incrementalFalseClassCounts[decision] = freq;
+			}
+			incrementalTrueClassCounts[outcome] += 1;
+			incrementalFalseClassCounts[outcome] -= 1;
+			incrementalTrueClassCountsPerCategory[decision] = incrementalTrueClassCounts;
+			incrementalFalseClassCountsPerCategory[decision] = incrementalFalseClassCounts;
+    }    
+			
+  }
+		
+	// now we iterate over each class instance (parallelizable) and determine which class
+	// holds the minimal gini update value for the information gain calculation later
+	for (const auto& [category, catSize]: totalCategoryCounts) {
+		// first compare change in gini value - we don't compare IG, since this is constance to S
+		// rather we want the minimal gini value for the split such that IG(S) - IG(S_new) is maximal
+		
+		ClassCounter incrementalTrueClassCounts = incrementalTrueClassCountsPerCategory[category];
+		ClassCounter incrementalFalseClassCounts = incrementalFalseClassCountsPerCategory[category];
+		double totalTrue = incrementalCategoryCounts[category];
+		const double trueGini = gini(incrementalTrueClassCounts, totalTrue);
+		const double falseGini = gini(incrementalFalseClassCounts, (totalSize-totalTrue));
+		const double currentGini = (trueGini * totalTrue + falseGini * (totalSize-totalTrue)) / totalSize;
+
+		if (currentGini < bestLoss) {
+				bestLoss = currentGini;
+				bestThresh = row.at(0);
+				bestTrueSize = totalTrue;
+				bestFalseSize = (totalSize-totalTrue);
+				bestTrueCounts = incrementalTrueClassCounts;
+				bestFalseCounts = incrementalFalseClassCounts;
+				if (bestLoss == 0)
+						break;
+		}
+	}
+	
+  return forward_as_tuple(bestThresh, bestLoss, bestTrueSize, bestFalseSize, bestTrueCounts, bestFalseCounts);
 }
 
-VecS Calculations::unique_values(const Data &data, size_t column) {
-    VecS unique_vals;
-
-    ClassCounter counter;
-    for (const auto &rows: data) {
-        const string &decision = rows.at(column);
-        counter[decision] += 0;
-    }
-
-    unique_vals.reserve(counter.size());
-
-    std::transform(begin(counter), std::end(counter), std::back_inserter(unique_vals),
-                   [](const auto &kv) { return kv.first; });
-    return unique_vals;
-}
 
 const ClassCounter Calculations::classCounts(const Data& data) {
   ClassCounter counter;
@@ -134,3 +242,33 @@ const ClassCounter Calculations::classCounts(const Data& data) {
   }
   return counter;
 }
+
+/**
+ * Sort data in descending order based on provided column as index
+ *
+ * @param data  Data object containing data
+ * @param col column to use as sort index
+ */
+const Data Calculations::sort_numeric_data(const Data &data, int col) {
+
+    Data sortedData;
+    for (VecS row : data) {
+        const VecS newRow{row.at(col), row.back()};
+        sortedData.emplace_back(std::move(newRow));
+    }
+    Data *temp = (Data *) &sortedData;
+    sort(temp->begin(), temp->end(), comparator);
+    return sortedData;
+}
+
+/**
+ * Comparator assuming that the index of a vector (first element) is the sort index
+ * Comparator assumes comparison of ordinal/numeric data points. Uses std::stoi to convert to integer values.
+ *
+ * @param row1: vector row to compare with row2
+ * @param row2: vector row to compare with row1
+ */
+bool Calculations::comparator(VecS &row1, VecS &row2) {
+    return std::stoi(row1.front()) > std::stoi(row2.front());
+}
+
