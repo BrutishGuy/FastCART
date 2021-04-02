@@ -97,7 +97,7 @@ float Calculations::info_gain(const ClassCounter &true_counts, const ClassCounte
 
 struct result {std::string bestThresh; double bestLoss; double bestTrueSize; double bestFalseSize; ClassCounter &bestTrueCounts; ClassCounter &bestFalseCounts;};
 
-tuple<std::string, double> Calculations::determine_best_threshold_numeric(const Data& data, int col) {
+result Calculations::determine_best_threshold_numeric(const Data& data, int col) {
   double bestLoss = std::numeric_limits<float>::infinity();
   std::string bestThresh;
 	double totalSize = data.size();
@@ -108,7 +108,6 @@ tuple<std::string, double> Calculations::determine_best_threshold_numeric(const 
 	ClassCounter incrementalFalseClassCounts;
 	
   Data sortedData = sort_numeric_data(data, col);
-	double current_uncertainty = gini(totalClassCounts, totalSize);
 
 	for (const auto& [decision, freq]: totalClassCounts) {
 		incrementalTrueClassCounts[decision] = 0;
@@ -158,13 +157,12 @@ tuple<std::string, double> Calculations::determine_best_threshold_numeric(const 
   return result{bestThresh, bestLoss, bestTrueSize, bestFalseSize, bestTrueCounts, bestFalseCounts};
 }
 
-tuple<std::string, double> Calculations::determine_best_threshold_cat(const Data& data, int col) {
+result Calculations::determine_best_threshold_cat(const Data& data, int col) {
   double bestLoss = std::numeric_limits<float>::infinity();
   std::string bestThresh;
 
   ClassCounter totalClassCounts = classCounts(data);
 	double totalSize = data.size();
-	double current_uncertainty = gini(totalClassCounts, totalSize);
 	
 	// instantiate here
 	ClassCounter incrementalCategoryCounts;
