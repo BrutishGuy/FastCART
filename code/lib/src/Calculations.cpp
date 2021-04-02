@@ -45,29 +45,26 @@ tuple<const double, const Question> Calculations::find_best_split(const Data& ro
 	for (size_t column = 0; column < n_features; column++) {
 		std::string colType = meta.columnTypes[column];
 		
-		std::string candidateThresh = " ";
-		double candidateLoss = 0.0;
-		double candidateTrueSize = 0.0;
-		double candidateFalseSize = 0.0;
-		ClassCounter candidateTrueCounts = overall_counts;
-		ClassCounter candidateFalseCounts = overall_counts;
-		tuple<std::string, double> bestThreshAndLoss;
+		//std::string candidateThresh = " ";
+		//double candidateLoss = 0.0;
+		//double candidateTrueSize = 0.0;
+		//double candidateFalseSize = 0.0;
+		//ClassCounter candidateTrueCounts = overall_counts;
+		//ClassCounter candidateFalseCounts = overall_counts;
+		//tuple<std::string, double> bestThreshAndLoss;
 		//std::cout << "Whoop whoop0" << std::endl;
 		if (colType.compare("categorical") == 0) {
 			auto[candidateThresh, candidateLoss, candidateTrueSize, candidateFalseSize, candidateTrueCounts, candidateFalseCounts] = determine_best_threshold_cat(rows, column);
+			if (candidateTrueSize == 0 || candidateFalseSize == 0)
+				continue;
+			const auto &candidateGain = info_gain(candidateTrueCounts, candidateFalseCounts, candidateTrueSize, candidateFalseSize, current_uncertainty);
 		} else {
 			auto[candidateThresh, candidateLoss, candidateTrueSize, candidateFalseSize, candidateTrueCounts, candidateFalseCounts] = determine_best_threshold_numeric(rows, column);
+			if (candidateTrueSize == 0 || candidateFalseSize == 0)
+				continue;
+			const auto &candidateGain = info_gain(candidateTrueCounts, candidateFalseCounts, candidateTrueSize, candidateFalseSize, current_uncertainty);
 		}
-		//std::cout << "Whoop whoop1" << std::endl;
 
-		// = bestThreshAndLoss;
-		if (candidateTrueSize == 0 || candidateFalseSize == 0)
-			continue;
-			
-		
-
-		const auto &candidateGain = info_gain(candidateTrueCounts, candidateFalseCounts, candidateTrueSize, candidateFalseSize, current_uncertainty);
-		//std::cout << "Whoop whoop2" << std::endl;
 		#pragma omp critical
 		{
 			if (candidateGain >= bestGain) {
