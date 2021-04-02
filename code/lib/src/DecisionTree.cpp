@@ -5,6 +5,7 @@
  */
 
 #include "DecisionTree.hpp"
+#include "Utils.hpp"
 #include <future>
 #include <tuple>
 
@@ -12,6 +13,7 @@ using std::make_shared;
 using std::shared_ptr;
 using std::string;
 using boost::timer::cpu_timer;
+
 
 DecisionTree::DecisionTree(const DataReader& dr) : root_(Node()), dr_(dr) {
   std::cout << "Start building tree." << std::endl; cpu_timer timer;
