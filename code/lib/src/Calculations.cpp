@@ -97,7 +97,7 @@ float Calculations::info_gain(const ClassCounter &true_counts, const ClassCounte
 
 //struct result {std::string bestThresh; double bestLoss; double bestTrueSize; double bestFalseSize; ClassCounter &bestTrueCounts; ClassCounter &bestFalseCounts;};
 
-tuple<std::string, double, double, double, ClassCounter, ClassCounter> Calculations::determine_best_threshold_numeric(const Data& data, int col) {
+std::tuple<std::string, double, double, double, ClassCounter, ClassCounter> Calculations::determine_best_threshold_numeric(const Data& data, int col) {
   double bestLoss = std::numeric_limits<float>::infinity();
   std::string bestThresh;
 	double totalSize = data.size();
@@ -157,7 +157,7 @@ tuple<std::string, double, double, double, ClassCounter, ClassCounter> Calculati
   return forward_as_tuple(bestThresh, bestLoss, bestTrueSize, bestFalseSize, bestTrueCounts, bestFalseCounts);
 }
 
-tuple<std::string, double, double, double, ClassCounter, ClassCounter> Calculations::determine_best_threshold_cat(const Data& data, int col) {
+std::tuple<std::string, double, double, double, ClassCounter, ClassCounter> Calculations::determine_best_threshold_cat(const Data& data, int col) {
   double bestLoss = std::numeric_limits<float>::infinity();
   std::string bestThresh;
 
