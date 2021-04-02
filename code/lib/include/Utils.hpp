@@ -30,7 +30,11 @@ struct MetaData {
   VecS columnTypes;   // types include 'categorical', 'ordinal', 'numeric'
   
 };
-
+IsAlmostEqual(T x, T y, int ulp = 2)
+{
+    return std::fabs(x - y) < std::numeric_limits<T>::epsilon() * std::fabs(x + y) * ulp
+           || std::fabs(x - y) < std::numeric_limits<T>::min();
+}
 
 namespace Utils::iterators {
 
