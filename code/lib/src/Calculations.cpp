@@ -40,26 +40,26 @@ tuple<const double, const Question> Calculations::find_best_split(const Data& ro
   const auto &overall_counts = classCounts(rows);
   const float current_uncertainty = gini(overall_counts, rows.size());
 	size_t n_features = rows.back().size() - 1;  //number of columns
-	double dataSize = rows.size();
 	
 	#pragma omp parallel for num_threads(5)
 	for (size_t column = 0; column < n_features; column++) {
 		std::string colType = meta.columnTypes[column];
-
-		tuple<std::string, double> bestThreshAndLoss;
-		if (colType.compare("categorical") == 0) {
-			bestThreshAndLoss = determine_best_threshold_cat(rows, column);
-		} else {
-			bestThreshAndLoss = determine_best_threshold_numeric(rows, column);
-		}
-
+		
 		std::string candidateThresh;
 		double candidateLoss;
 		double candidateTrueSize;
 		double candidateFalseSize;
 		ClassCounter candidateTrueCounts;
 		ClassCounter candidateFalseCounts;
-		std::tie(candidateThresh, candidateLoss, candidateTrueSize, candidateFalseSize, candidateTrueCounts, candidateFalseCounts) = bestThreshAndLoss;
+		tuple<std::string, double> bestThreshAndLoss;
+		if (colType.compare("categorical") == 0) {
+			auto [candidateThresh, candidateLoss, candidateTrueSize, candidateFalseSize, candidateTrueCounts, candidateFalseCounts] = determine_best_threshold_cat(rows, column);
+		} else {
+			auto [candidateThresh, candidateLoss, candidateTrueSize, candidateFalseSize, candidateTrueCounts, candidateFalseCounts] = determine_best_threshold_numeric(rows, column);
+		}
+
+
+		// = bestThreshAndLoss;
 		
 		if (candidateTrueSize == 0 || candidateFalseSize == 0)
 				continue;
@@ -95,6 +95,7 @@ float Calculations::info_gain(const ClassCounter &true_counts, const ClassCounte
 	return current_uncertainty - p * gini(true_counts, true_size) - (1 - p) * gini(false_counts, false_size);
 }
 
+struct result {std::string bestThresh; double bestLoss; double bestTrueSize; double bestFalseSize; ClassCounter &bestTrueCounts; ClassCounter &bestFalseCounts;};
 
 tuple<std::string, double> Calculations::determine_best_threshold_numeric(const Data& data, int col) {
   double bestLoss = std::numeric_limits<float>::infinity();
@@ -154,7 +155,7 @@ tuple<std::string, double> Calculations::determine_best_threshold_numeric(const 
         }
   }
 		
-  return forward_as_tuple(bestThresh, bestLoss, bestTrueSize, bestFalseSize, bestTrueCounts, bestFalseCounts);
+  return result{bestThresh, bestLoss, bestTrueSize, bestFalseSize, bestTrueCounts, bestFalseCounts};
 }
 
 tuple<std::string, double> Calculations::determine_best_threshold_cat(const Data& data, int col) {
@@ -224,7 +225,7 @@ tuple<std::string, double> Calculations::determine_best_threshold_cat(const Data
 		}
 	}
 	
-  return forward_as_tuple(bestThresh, bestLoss, bestTrueSize, bestFalseSize, bestTrueCounts, bestFalseCounts);
+  return result{bestThresh, bestLoss, bestTrueSize, bestFalseSize, bestTrueCounts, bestFalseCounts};
 }
 
 
