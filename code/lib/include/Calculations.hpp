@@ -28,9 +28,9 @@ float info_gain(const ClassCounter &true_counts, const ClassCounter &false_count
 
 std::tuple<const double, const Question> find_best_split(const Data &rows, const MetaData &meta);
 
-std::tuple<std::string, double> determine_best_threshold_numeric(const Data &data, int col);
+tuple<std::string, double, double, double, ClassCounter, ClassCounter> determine_best_threshold_numeric(const Data &data, int col);
 
-std::tuple<std::string, double> determine_best_threshold_cat(const Data &data, int col);
+tuple<std::string, double, double, double, ClassCounter, ClassCounter> determine_best_threshold_cat(const Data &data, int col);
 
 const ClassCounter classCounts(const Data &data);
 

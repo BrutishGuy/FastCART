@@ -95,9 +95,9 @@ float Calculations::info_gain(const ClassCounter &true_counts, const ClassCounte
 	return current_uncertainty - p * gini(true_counts, true_size) - (1 - p) * gini(false_counts, false_size);
 }
 
-struct result {std::string bestThresh; double bestLoss; double bestTrueSize; double bestFalseSize; ClassCounter &bestTrueCounts; ClassCounter &bestFalseCounts;};
+//struct result {std::string bestThresh; double bestLoss; double bestTrueSize; double bestFalseSize; ClassCounter &bestTrueCounts; ClassCounter &bestFalseCounts;};
 
-result Calculations::determine_best_threshold_numeric(const Data& data, int col) {
+tuple<std::string, double, double, double, ClassCounter, ClassCounter> Calculations::determine_best_threshold_numeric(const Data& data, int col) {
   double bestLoss = std::numeric_limits<float>::infinity();
   std::string bestThresh;
 	double totalSize = data.size();
@@ -154,10 +154,10 @@ result Calculations::determine_best_threshold_numeric(const Data& data, int col)
         }
   }
 		
-  return result{bestThresh, bestLoss, bestTrueSize, bestFalseSize, bestTrueCounts, bestFalseCounts};
+  return forward_as_tuple(bestThresh, bestLoss, bestTrueSize, bestFalseSize, bestTrueCounts, bestFalseCounts);
 }
 
-result Calculations::determine_best_threshold_cat(const Data& data, int col) {
+tuple<std::string, double, double, double, ClassCounter, ClassCounter> Calculations::determine_best_threshold_cat(const Data& data, int col) {
   double bestLoss = std::numeric_limits<float>::infinity();
   std::string bestThresh;
 
@@ -223,7 +223,7 @@ result Calculations::determine_best_threshold_cat(const Data& data, int col) {
 		}
 	}
 	
-  return result{bestThresh, bestLoss, bestTrueSize, bestFalseSize, bestTrueCounts, bestFalseCounts};
+  return forward_as_tuple(bestThresh, bestLoss, bestTrueSize, bestFalseSize, bestTrueCounts, bestFalseCounts);
 }
 
 
