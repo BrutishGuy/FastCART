@@ -36,7 +36,7 @@ tuple<const Data, const Data> Calculations::partition(const Data& data, const Qu
 tuple<const double, const Question> Calculations::find_best_split(const Data& rows, const MetaData& meta) {
   double bestGain = 0.0;  // keep track of the best information gain
   auto bestQuestion = Question();  //keep track of the feature / value that produced it
-  std::cout << "Whoop whoop INIT" << std::endl;
+  //std::cout << "Whoop whoop INIT" << std::endl;
   const auto &overall_counts = classCounts(rows);
   const float current_uncertainty = gini(overall_counts, rows.size());
 	size_t n_features = rows.back().size() - 1;  //number of columns
@@ -52,13 +52,13 @@ tuple<const double, const Question> Calculations::find_best_split(const Data& ro
 		ClassCounter candidateTrueCounts = overall_counts;
 		ClassCounter candidateFalseCounts = overall_counts;
 		tuple<std::string, double> bestThreshAndLoss;
-		std::cout << "Whoop whoop0" << std::endl;
+		//std::cout << "Whoop whoop0" << std::endl;
 		if (colType.compare("categorical") == 0) {
 			std::tie(candidateThresh, candidateLoss, candidateTrueSize, candidateFalseSize, candidateTrueCounts, candidateFalseCounts) = determine_best_threshold_cat(rows, column);
 		} else {
 			std::tie(candidateThresh, candidateLoss, candidateTrueSize, candidateFalseSize, candidateTrueCounts, candidateFalseCounts) = determine_best_threshold_numeric(rows, column);
 		}
-		std::cout << "Whoop whoop1" << std::endl;
+		//std::cout << "Whoop whoop1" << std::endl;
 
 		// = bestThreshAndLoss;
 		if (candidateTrueSize == 0 || candidateFalseSize == 0)
@@ -67,7 +67,7 @@ tuple<const double, const Question> Calculations::find_best_split(const Data& ro
 		
 
 		const auto &candidateGain = info_gain(candidateTrueCounts, candidateFalseCounts, candidateTrueSize, candidateFalseSize, current_uncertainty);
-		std::cout << "Whoop whoop2" << std::endl;
+		//std::cout << "Whoop whoop2" << std::endl;
 		#pragma omp critical
 		{
 			if (candidateGain >= bestGain) {
@@ -76,9 +76,9 @@ tuple<const double, const Question> Calculations::find_best_split(const Data& ro
 				bestQuestion = q;
 			}
 		}
-		std::cout << "Whoop whoop3" << std::endl;
+		//std::cout << "Whoop whoop3" << std::endl;
 	}
-   std::cout << "Whoop whoop END" << std::endl;
+   //std::cout << "Whoop whoop END" << std::endl;
   return forward_as_tuple(bestGain, bestQuestion);
 }
 
@@ -156,7 +156,7 @@ std::tuple<std::string, double, double, double, ClassCounter, ClassCounter> Calc
 					currentFeatureValue = row.at(0);
         }
   }
-	std::cout << "Whoop whoop6" << std::endl;	
+	//std::cout << "Whoop whoop6" << std::endl;	
   return forward_as_tuple(bestThresh, bestLoss, bestTrueSize, bestFalseSize, bestTrueCounts, bestFalseCounts);
 }
 
@@ -225,7 +225,7 @@ std::tuple<std::string, double, double, double, ClassCounter, ClassCounter> Calc
 						break;
 		}
 	}
-	std::cout << "Whoop whoop5" << std::endl;
+	//std::cout << "Whoop whoop5" << std::endl;
   return forward_as_tuple(bestThresh, bestLoss, bestTrueSize, bestFalseSize, bestTrueCounts, bestFalseCounts);
 }
 
