@@ -34,9 +34,9 @@ std::tuple<std::string, double> determine_best_threshold_cat(const Data &data, i
 
 const ClassCounter classCounts(const Data &data);
 
-const Data Calculations::sort_numeric_data(const Data &data, int col);
+const Data sort_numeric_data(const Data &data, int col);
 
-bool Calculations::comparator(VecS &row1, VecS &row2);
+bool comparator(VecS &row1, VecS &row2);
 
 } // namespace Calculations
 
