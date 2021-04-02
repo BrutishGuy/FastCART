@@ -16,6 +16,7 @@
 #include <unordered_map>
 #include <vector>
 #include <boost/timer/timer.hpp>
+#include <cmath>
 
 
 // You can change these data type aliases
