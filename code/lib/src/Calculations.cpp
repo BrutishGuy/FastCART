@@ -26,14 +26,14 @@ using std::unordered_map;
 //boost::atomic_int consumer_count(0);
 
 
-boost::lockfree::queue<std::tuple<double gain, int col, std::string thresh>> queue(128);
+boost::lockfree::queue<std::tuple<double gain, size_t col, std::string thresh>> queue(128);
 
 boost::atomic<bool> done (false);
 boost::atomic<double> bestGainOverall;
-boost::atomic<int> bestColumnOverall;
+boost::atomic<size_t> bestColumnOverall;
 boost::atomic<std::string> bestThreshOverall;
 
-void producer(Data &data, int col)
+void producer(Data &data, size_t col)
 {
     std::string colType = meta.columnTypes[col];
 		const auto &overall_counts = classCounts(rows);
@@ -63,8 +63,8 @@ void consumer(void)
 {
 		double candidateGain = 0.0;
 		std::string candidateThresh;
-		int candidateColumn;
-    std::tuple<double, int, Question> value;
+		size_t candidateColumn;
+    std::tuple<double, size_t, Question> value;
     while (!done) {
 			while (queue.pop(value)) {
 				std::tie(candidateGain, candidateColumn, candidateThresh) = value;
@@ -106,7 +106,7 @@ tuple<const Data, const Data> Calculations::partition(const Data& data, const Qu
 tuple<const double, const Question> Calculations::find_best_split(const Data& rows, const MetaData& meta) {
   double bestGain = 0.0;  // keep track of the best information gain
   //auto bestQuestion = Question();  //keep track of the feature / value that produced it
-  int bestColumn;
+  size_t bestColumn;
 	std::string bestThresh;
 	
 	size_t n_features = rows.back().size() - 1;  //number of columns
@@ -116,11 +116,11 @@ tuple<const double, const Question> Calculations::find_best_split(const Data& ro
 	for (size_t column = 0; column < n_features; column++) {
 		producer_threads.create_thread(producer, rows, column);
 	}
-	consumer_theads.create_thread(consumer);
+	consumer_threads.create_thread(consumer);
 	producer_threads.join_all();
   done = true;
 
-  consumer_threads.join_all()
+  consumer_threads.join_all();
 	
 	bestGain = bestGainOverall;
 	bestColumn = bestColumnOverall;

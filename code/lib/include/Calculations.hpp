@@ -38,6 +38,10 @@ const Data sort_numeric_data(const Data &data, int col);
 
 bool comparator(VecS &row1, VecS &row2);
 
+void consumer(void);
+
+void producer(Data &data, int col);
+
 } // namespace Calculations
 
 #endif //DECISIONTREE_CALCULATIONS_HPP
