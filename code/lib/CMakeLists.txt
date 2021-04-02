@@ -27,7 +27,7 @@ set(HEADERS
 
 add_library(${PROJECT_NAME} ${SOURCES} ${HEADERS})
 target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES} Threads::Threads)
-target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Weffc++ -Wpedantic)
+target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Weffc++ -Wpedantic -fopenmp)
 target_include_directories(${PROJECT_NAME} PUBLIC
         ${Boost_INCLUDE_DIR}
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

@@ -2,8 +2,7 @@ cmake_minimum_required(VERSION 3.1)
 project(Test)
 
 set(CMAKE_CXX_STANDARD 17)
-set(GCC_OPENMP_FLAG "-fopenmp")
-set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${GCC_OPENMP_FLAG}")
+set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -fopenmp")
 
 # find_package(DecisionTree 0.1 REQUIRED)
 # if(DecisionTree_FOUND)
@@ -31,11 +30,11 @@ set (FILES
 
 
 add_executable(DecisionTreeTest decision_tree_tester.cpp ${FILES})
-target_compile_options(DecisionTreeTest PRIVATE -Wall -Weffc++ -Wpedantic)
+target_compile_options(DecisionTreeTest PRIVATE -Wall -Weffc++ -Wpedantic -fopenmp)
 target_include_directories(DecisionTreeTest PUBLIC ../lib/include ${Boost_INCLUDE_DIRS})
 target_link_libraries(DecisionTreeTest Threads::Threads ${Boost_LIBRARIES})
 
 add_executable(BaggingTest bagging_tester.cpp ${FILES})
-target_compile_options(BaggingTest PRIVATE -Wall -Weffc++ -Wpedantic)
+target_compile_options(BaggingTest PRIVATE -Wall -Weffc++ -Wpedantic -fopenmp)
 target_include_directories(BaggingTest PUBLIC ../lib/include ${Boost_INCLUDE_DIRS})
 target_link_libraries(BaggingTest Threads::Threads ${Boost_LIBRARIES})

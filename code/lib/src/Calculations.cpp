@@ -10,10 +10,6 @@
 #include <omp.h>
 #include "Calculations.hpp"
 #include "Utils.hpp"
-#include <boost/thread/thread.hpp>
-#include <boost/lockfree/queue.hpp>
-#include <iostream>
-#include <boost/atomic.hpp>
 
 using std::tuple;
 using std::pair;
@@ -21,18 +17,6 @@ using std::forward_as_tuple;
 using std::vector;
 using std::string;
 using std::unordered_map;
-
-//boost::atomic_int producer_count(0);
-//boost::atomic_int consumer_count(0);
-
-
-boost::lockfree::queue<std::tuple<double gain, size_t col, std::string thresh>> queue(128);
-
-boost::atomic<bool> done (false);
-boost::atomic<double> bestGainOverall (0.0);
-boost::atomic<size_t> bestColumnOverall (0);
-boost::atomic<std::string> bestThreshOverall (" ");
-
 
 tuple<const Data, const Data> Calculations::partition(const Data& data, const Question& q) {
   Data true_rows;
@@ -51,27 +35,47 @@ tuple<const Data, const Data> Calculations::partition(const Data& data, const Qu
 
 tuple<const double, const Question> Calculations::find_best_split(const Data& rows, const MetaData& meta) {
   double bestGain = 0.0;  // keep track of the best information gain
-  //auto bestQuestion = Question();  //keep track of the feature / value that produced it
-  size_t bestColumn;
-	std::string bestThresh;
-	
+  auto bestQuestion = Question();  //keep track of the feature / value that produced it
+  
+  const auto &overall_counts = classCounts(rows);
+  const float current_uncertainty = gini(overall_counts, rows.size());
 	size_t n_features = rows.back().size() - 1;  //number of columns
 	
-	boost::thread_group producer_threads, consumer_threads;
-	
+	#pragma omp parallel for num_threads(5)
 	for (size_t column = 0; column < n_features; column++) {
-		producer_threads.create_thread(producer, rows, column);
-	}
-	consumer_threads.create_thread(consumer);
-	producer_threads.join_all();
-  done = true;
+		std::string colType = meta.columnTypes[column];
+		
+		std::string candidateThresh;
+		double candidateLoss;
+		double candidateTrueSize;
+		double candidateFalseSize;
+		ClassCounter candidateTrueCounts;
+		ClassCounter candidateFalseCounts;
+		tuple<std::string, double> bestThreshAndLoss;
+		if (colType.compare("categorical") == 0) {
+			auto [candidateThresh, candidateLoss, candidateTrueSize, candidateFalseSize, candidateTrueCounts, candidateFalseCounts] = determine_best_threshold_cat(rows, column);
+		} else {
+			auto [candidateThresh, candidateLoss, candidateTrueSize, candidateFalseSize, candidateTrueCounts, candidateFalseCounts] = determine_best_threshold_numeric(rows, column);
+		}
 
-  consumer_threads.join_all();
-	
-	bestGain = bestGainOverall;
-	bestColumn = bestColumnOverall;
-	bestThresh = bestThreshOverall;
-	Question bestQuestion = Question(bestColumn, bestThresh);
+
+		// = bestThreshAndLoss;
+		
+		if (candidateTrueSize == 0 || candidateFalseSize == 0)
+				continue;
+
+		const auto &candidateGain = info_gain(candidateTrueCounts, candidateFalseCounts, candidateTrueSize, candidateFalseSize, current_uncertainty);
+
+		#pragma omp critical
+		{
+			if (candidateGain >= bestGain) {
+				const Question q(column, candidateThresh);
+				bestGain = candidateGain;
+				bestQuestion = q;
+			}
+		}
+	}
+
   return forward_as_tuple(bestGain, bestQuestion);
 }
 
@@ -264,57 +268,4 @@ const Data Calculations::sort_numeric_data(const Data &data, int col) {
 bool Calculations::comparator(VecS &row1, VecS &row2) {
     return std::stoi(row1.front()) > std::stoi(row2.front());
 }
-
-
-void producer(Data &data, size_t col)
-{
-    std::string colType = meta.columnTypes[col];
-		const auto &overall_counts = classCounts(rows);
-		const float current_uncertainty = gini(overall_counts, rows.size());
-		std::string candidateThresh;
-		double candidateLoss;
-		double candidateTrueSize;
-		double candidateFalseSize;
-		ClassCounter candidateTrueCounts;
-		ClassCounter candidateFalseCounts;
-		tuple<std::string, double> bestThreshAndLoss;
-		if (colType.compare("categorical") == 0) {
-			auto [candidateThresh, candidateLoss, candidateTrueSize, candidateFalseSize, candidateTrueCounts, candidateFalseCounts] = determine_best_threshold_cat(rows, column);
-		} else {
-			auto [candidateThresh, candidateLoss, candidateTrueSize, candidateFalseSize, candidateTrueCounts, candidateFalseCounts] = determine_best_threshold_numeric(rows, column);
-		}
-
-		const auto &candidateGain = info_gain(candidateTrueCounts, candidateFalseCounts, candidateTrueSize, candidateFalseSize, current_uncertainty);
-		while (!queue.push(std::tuple(candidateGain, col, candidateThresh)))
-			;
-}
-
-void consumer(void)
-{
-		double candidateGain = 0.0;
-		std::string candidateThresh;
-		size_t candidateColumn;
-    std::tuple<double, size_t, Question> value;
-    while (!done) {
-			while (queue.pop(value)) {
-				std::tie(candidateGain, candidateColumn, candidateThresh) = value;
-				if (candidateGain >= bestGainOverall) {
-					bestGainOverall = candidateGain;
-					bestThreshOverall = candidateThresh;
-					bestColumnOverall = candidateColumn;
-				};
-			}
-    }
-
-    while (queue.pop(value)) {
-			std::tie(candidateGain, candidateColumn, candidateThresh) = value;
-			if (candidateGain >= bestGainOverall) {
-				bestGainOverall = candidateGain;
-				bestThreshOverall = candidateThresh;
-				bestColumnOverall = candidateColumn;
-			};
-		}
-
-}
-
 
