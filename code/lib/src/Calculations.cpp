@@ -180,7 +180,7 @@ std::tuple<std::string, double> Calculations::determine_best_threshold_cat(const
 
   ClassCounter totalClassCounts = classCounts(data);
 
-	double current_uncertainty = gini(totalClassCounts, totalSize);
+	double current_uncertainty = gini(totalClassCounts, data.size());
 	// instantiate here
 	ClassCounter incrementalCategoryCounts;
 	ClassCounterPerCategory incrementalTrueClassCountsPerCategory;
