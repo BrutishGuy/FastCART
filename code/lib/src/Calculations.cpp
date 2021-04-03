@@ -179,8 +179,8 @@ std::tuple<std::string, double> Calculations::determine_best_threshold_cat(const
   std::string bestThresh;
 
   ClassCounter totalClassCounts = classCounts(data);
-
-	double current_uncertainty = gini(totalClassCounts, data.size());
+	double totalSize = data.size();
+	double current_uncertainty = gini(totalClassCounts, totalSize);
 	// instantiate here
 	ClassCounter incrementalCategoryCounts;
 	ClassCounterPerCategory incrementalTrueClassCountsPerCategory;
