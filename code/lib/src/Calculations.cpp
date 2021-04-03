@@ -46,7 +46,7 @@ tuple<const double, const Question> Calculations::find_best_split(const Data& ro
 		std::string colType = meta.columnTypes[column];
 		
 		double candGain = 0.0;
-		const Question q;
+		auto q = Question();
 		//double candidateLoss = 0.0;
 		//double candidateTrueSize = 0.0;
 		//double candidateFalseSize = 0.0;
