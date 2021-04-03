@@ -59,12 +59,14 @@ tuple<const double, const Question> Calculations::find_best_split(const Data& ro
 			if (candidateTrueSize == 0 || candidateFalseSize == 0)
 				continue;
 			const auto &candidateGain = info_gain(candidateTrueCounts, candidateFalseCounts, candidateTrueSize, candidateFalseSize, current_uncertainty);
+			std::cout << candidateGain << std::endl;
 			//candGain = candidateGain;
 		} else {
 			auto[candidateThresh, candidateLoss, candidateTrueSize, candidateFalseSize, candidateTrueCounts, candidateFalseCounts] = determine_best_threshold_numeric(rows, column);
 			if (candidateTrueSize == 0 || candidateFalseSize == 0)
 				continue;
 			const auto &candidateGain = info_gain(candidateTrueCounts, candidateFalseCounts, candidateTrueSize, candidateFalseSize, current_uncertainty);
+			std::cout << candidateGain << std::endl;
 			//candGain = candidateGain;
 		}
 
