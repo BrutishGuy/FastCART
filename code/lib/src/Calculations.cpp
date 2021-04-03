@@ -61,6 +61,14 @@ tuple<const double, const Question> Calculations::find_best_split(const Data& ro
 			const auto &candidateGain = info_gain(candidateTrueCounts, candidateFalseCounts, candidateTrueSize, candidateFalseSize, current_uncertainty);
 			std::cout << "Gain: " << candidateGain << std::endl;
 			//candGain = candidateGain;
+			#pragma omp critical
+			{
+				if (candidateGain >= bestGain) {
+					const Question q(column, candidateThresh);
+					bestGain = candidateGain;
+					bestQuestion = q;
+				}
+			}
 		} else {
 			auto[candidateThresh, candidateLoss, candidateTrueSize, candidateFalseSize, candidateTrueCounts, candidateFalseCounts] = determine_best_threshold_numeric(rows, column);
 			//if (candidateTrueSize == 0 || candidateFalseSize == 0)
@@ -68,16 +76,17 @@ tuple<const double, const Question> Calculations::find_best_split(const Data& ro
 			const auto &candidateGain = info_gain(candidateTrueCounts, candidateFalseCounts, candidateTrueSize, candidateFalseSize, current_uncertainty);
 			std::cout << "Gain: " << candidateGain << std::endl;
 			//candGain = candidateGain;
-		}
-
-		#pragma omp critical
-		{
-			if (candGain >= bestGain) {
-				const Question q(column, candidateThresh);
-				bestGain = candGain;
-				bestQuestion = q;
+			#pragma omp critical
+			{
+				if (candidateGain >= bestGain) {
+					const Question q(column, candidateThresh);
+					bestGain = candidateGain;
+					bestQuestion = q;
+				}
 			}
 		}
+
+		
 		//std::cout << "Whoop whoop3" << std::endl;
 	}
    //std::cout << "Whoop whoop END" << std::endl;
