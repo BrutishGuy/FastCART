@@ -122,7 +122,7 @@ std::tuple<std::string, double> Calculations::determine_best_threshold_numeric(c
 	ClassCounter incrementalFalseClassCounts;
 	
 	Data sortedData = sort_numeric_data(data, col);
-	double current_uncertainty = gini(totalClassCounts, totalSize)
+	double current_uncertainty = gini(totalClassCounts, totalSize);
 	for (const auto& [decision, freq]: totalClassCounts) {
 		incrementalTrueClassCounts[decision] = 0;
 		incrementalFalseClassCounts[decision] = freq;
@@ -180,7 +180,7 @@ std::tuple<std::string, double> Calculations::determine_best_threshold_cat(const
 
   ClassCounter totalClassCounts = classCounts(data);
 
-	double current_uncertainty = gini(totalClassCounts, totalSize)
+	double current_uncertainty = gini(totalClassCounts, totalSize);
 	// instantiate here
 	ClassCounter incrementalCategoryCounts;
 	ClassCounterPerCategory incrementalTrueClassCountsPerCategory;
