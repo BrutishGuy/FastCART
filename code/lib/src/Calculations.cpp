@@ -45,6 +45,7 @@ tuple<const double, const Question> Calculations::find_best_split(const Data& ro
 	for (size_t column = 0; column < n_features; column++) {
 		std::string colType = meta.columnTypes[column];
 		
+		double candGain = 0.0;
 		//std::string candidateThresh = " ";
 		//double candidateLoss = 0.0;
 		//double candidateTrueSize = 0.0;
@@ -58,18 +59,20 @@ tuple<const double, const Question> Calculations::find_best_split(const Data& ro
 			if (candidateTrueSize == 0 || candidateFalseSize == 0)
 				continue;
 			const auto &candidateGain = info_gain(candidateTrueCounts, candidateFalseCounts, candidateTrueSize, candidateFalseSize, current_uncertainty);
+			candGain = candidateGain;
 		} else {
 			auto[candidateThresh, candidateLoss, candidateTrueSize, candidateFalseSize, candidateTrueCounts, candidateFalseCounts] = determine_best_threshold_numeric(rows, column);
 			if (candidateTrueSize == 0 || candidateFalseSize == 0)
 				continue;
 			const auto &candidateGain = info_gain(candidateTrueCounts, candidateFalseCounts, candidateTrueSize, candidateFalseSize, current_uncertainty);
+			candGain = candidateGain;
 		}
 
 		#pragma omp critical
 		{
-			if (candidateGain >= bestGain) {
+			if (candGain >= bestGain) {
 				const Question q(column, candidateThresh);
-				bestGain = candidateGain;
+				bestGain = candGain;
 				bestQuestion = q;
 			}
 		}
