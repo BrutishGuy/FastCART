@@ -168,8 +168,8 @@ std::tuple<std::string, double> Calculations::determine_best_threshold_numeric(c
         }
   }
 	//std::cout << "Whoop whoop6" << std::endl;	
-  const float p = static_cast<float>(true_size) / (true_size + false_size);
-  bestLoss = current_uncertainty - p * gini(true_counts, true_size) - (1 - p) * gini(false_counts, false_size);
+  const float p = static_cast<float>(bestTrueSize) / (bestTrueSize + bestFalseSize);
+  bestLoss = current_uncertainty - p * gini(bestTrueCounts, bestTrueSize) - (1 - p) * gini(bestFalseCounts, bestFalseSize);
 
   return forward_as_tuple(bestThresh, bestLoss);
 }
@@ -240,8 +240,8 @@ std::tuple<std::string, double> Calculations::determine_best_threshold_cat(const
 		}
 	}
 	//std::cout << "Whoop whoop5" << std::endl;
-  const float p = static_cast<float>(true_size) / (true_size + false_size);
-  bestLoss = current_uncertainty - p * gini(true_counts, true_size) - (1 - p) * gini(false_counts, false_size);
+  const float p = static_cast<float>(bestTrueSize) / (bestTrueSize + bestFalseSize);
+  bestLoss = current_uncertainty - p * gini(bestTrueCounts, bestTrueSize) - (1 - p) * gini(bestFalseCounts, bestFalseSize);
 
   return forward_as_tuple(bestThresh, bestLoss);
 }
