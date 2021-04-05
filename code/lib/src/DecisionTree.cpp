@@ -94,9 +94,10 @@ const Node DecisionTree::buildTreeStandard(const Data& rows, const MetaData& met
 			Leaf leaf(classCounter);
 			return Node(leaf);
     }
-		std::cout << "HUR DUR build 2" << std::endl;
+		
     const auto[true_rows, false_rows] = Calculations::partition(rows, question);
 		depth += 1;
+		std::cout << depth << std::endl;
 		auto true_branch = buildTreeStandard(true_rows, meta, depth);
     auto false_branch = buildTreeStandard(false_rows, meta, depth);
 		return Node(std::move(true_branch), std::move(false_branch), question);
