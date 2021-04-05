@@ -229,8 +229,8 @@ std::tuple<std::string, double> Calculations::determine_best_threshold_cat(const
 	ClassCounter bestTrueCounts;
 	ClassCounter bestFalseCounts;
 	#pragma omp parallel for reduction(reduce_classcounter:incrementalCategoryCounts) reduction(reduce_classcatcounter:incrementalTrueClassCountsPerCategory, incrementalFalseClassCountsPerCategory)
-	for (int i = 0; i < data.size; i++) {
-		std::vector<std::string> row = data.get(i);
+	for (int i = 0; i < data.size(); i++) {
+		std::vector<std::string> row = data[i];
 		std::string decision = row.at(col);
 		std::string outcome = row.back();
     if (incrementalCategoryCounts.find(decision) != std::end(incrementalCategoryCounts)) {
