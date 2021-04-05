@@ -6,7 +6,8 @@
 
 #include "DecisionTree.hpp"
 #include "Utils.hpp"
-#include <future>
+//#include <future>
+#include <boost/thread.hpp>
 #include <tuple>
 
 using std::make_shared;
@@ -45,11 +46,14 @@ const Node DecisionTree::buildTree(const Data& rows, const MetaData& meta) {
     }
 		std::cout << "HUR DUR build 1" << std::endl;
     const auto[true_rows, false_rows] = Calculations::partition(rows, question);
-    //auto true_branch = std::async(std::launch::async, &DecisionTree::buildTree, this, std::cref(true_rows), std::cref(meta));
-    //auto false_branch = std::async(std::launch::async, &DecisionTree::buildTree, this, std::cref(false_rows), std::cref(meta));
+    auto true_branch = std::async(std::launch::async, &DecisionTree::buildTreeStandard, this, std::cref(true_rows));
+    auto false_branch = std::async(std::launch::async, &DecisionTree::buildTreeStandard, this, std::cref(false_rows));
+		
+		return Node(true_branch.get(), false_branch.get(), question);
+		
 		//auto true_branch = buildTree(true_rows, meta);
     //auto false_branch = buildTree(false_rows, meta);
-		Node *true_branch = new Node;
+		/* Node *true_branch = new Node;
 		Node *false_branch = new Node;
 		
 		if (rows.size() < 5000) {
@@ -75,7 +79,7 @@ const Node DecisionTree::buildTree(const Data& rows, const MetaData& meta) {
 
 
 
-		return Node(*true_branch, *false_branch, question);
+		return Node(*true_branch, *false_branch, question); */
 		//delete true_branch;
 		//delete false_branch;
 
