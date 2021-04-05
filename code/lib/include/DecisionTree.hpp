@@ -29,10 +29,9 @@ class DecisionTree {
   private:
     DataReader dr_;
 
-    const Node buildTree(const Data& rows, const MetaData &meta);
-	const Node asyncBuildTree(const Data &rows, const MetaData &meta);
-    const Node blockingBuildTree(const Data &rows, const MetaData &meta);
-	void print(const std::shared_ptr<Node> root, std::string spacing="") const;
+    std::unique_ptr<Node>  buildTree(const Data& rows, const MetaData &meta);
+		std::unique_ptr<Node>  buildTreeStandard(const Data& rows, const MetaData& meta);
+		void print(const std::shared_ptr<Node> root, std::string spacing="") const;
 
 };
 
