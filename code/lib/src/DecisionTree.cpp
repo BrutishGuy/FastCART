@@ -6,8 +6,8 @@
 
 #include "DecisionTree.hpp"
 #include "Utils.hpp"
-//#include <future>
-#include <boost/thread.hpp>
+#include <future>
+//#include <boost/thread.hpp>
 #include <tuple>
 
 using std::make_shared;
