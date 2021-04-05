@@ -46,7 +46,7 @@ const Node DecisionTree::buildTree(const Data& rows, const MetaData& meta) {
     }
 		//std::cout << "HUR DUR build 1" << std::endl;
     const auto[true_rows, false_rows] = Calculations::partition(rows, question);
-		depth = 0;
+		int depth = 0;
     auto true_branch = std::async(std::launch::async, &DecisionTree::buildTreeStandard, this, std::cref(true_rows), std::cref(meta), std::cref(depth));
     auto false_branch = std::async(std::launch::async, &DecisionTree::buildTreeStandard, this, std::cref(false_rows), std::cref(meta), std::cref(depth));
 		
@@ -96,7 +96,7 @@ const Node DecisionTree::buildTreeStandard(const Data& rows, const MetaData& met
     }
 		std::cout << "HUR DUR build 2" << std::endl;
     const auto[true_rows, false_rows] = Calculations::partition(rows, question);
-		int depth += 1;
+		depth += 1;
 		auto true_branch = buildTreeStandard(true_rows, meta, depth);
     auto false_branch = buildTreeStandard(false_rows, meta, depth);
 		return Node(std::move(true_branch), std::move(false_branch), question);
