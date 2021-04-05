@@ -41,7 +41,7 @@ const Node DecisionTree::buildTree(const Data& rows, const MetaData& meta) {
     if (IsAlmostEqual(gain, 0.0)) {
 			ClassCounter classCounter = Calculations::classCounts(rows);
 			Leaf leaf(classCounter);
-			return std::make_unique<Node>(leaf);
+			return Node(leaf);
     }
 		std::cout << "HUR DUR build 1" << std::endl;
     const auto[true_rows, false_rows] = Calculations::partition(rows, question);
