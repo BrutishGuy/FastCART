@@ -29,8 +29,8 @@ class DecisionTree {
   private:
     DataReader dr_;
 
-    std::unique_ptr<Node>  buildTree(const Data& rows, const MetaData &meta);
-		std::unique_ptr<Node>  buildTreeStandard(const Data& rows, const MetaData& meta);
+    Node buildTree(const Data& rows, const MetaData &meta);
+		Node buildTreeStandard(const Data& rows, const MetaData& meta);
 		void print(const std::shared_ptr<Node> root, std::string spacing="") const;
 
 };

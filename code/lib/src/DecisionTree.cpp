@@ -35,7 +35,7 @@ DecisionTree::DecisionTree(const DataReader &dr, const std::vector<size_t> &samp
     std::cout << "Done with building tree as part of bagging.... " << timer.format() << std::endl;
 }
 
-std::unique_ptr<Node> DecisionTree::buildTree(const Data& rows, const MetaData& meta) {
+const Node DecisionTree::buildTree(const Data& rows, const MetaData& meta) {
 		//std::cout << "HUR DUR build INIT" << std::endl;
     auto[gain, question] = Calculations::find_best_split(rows, meta);
     if (IsAlmostEqual(gain, 0.0)) {
@@ -75,25 +75,25 @@ std::unique_ptr<Node> DecisionTree::buildTree(const Data& rows, const MetaData& 
 
 
 
-		return std::make_unique<Node> (*true_branch, *false_branch, question);
+		return Node(*true_branch, *false_branch, question);
 		//delete true_branch;
 		//delete false_branch;
 
 }
 
-std::unique_ptr<Node>  DecisionTree::buildTreeStandard(const Data& rows, const MetaData& meta) {
+const Node DecisionTree::buildTreeStandard(const Data& rows, const MetaData& meta) {
 		//std::cout << "HUR DUR build INIT" << std::endl;
     auto[gain, question] = Calculations::find_best_split(rows, meta);
     if (IsAlmostEqual(gain, 0.0)) {
 			ClassCounter classCounter = Calculations::classCounts(rows);
 			Leaf leaf(classCounter);
-			return std::make_unique<Node>(leaf);
+			return Node(leaf);
     }
 		std::cout << "HUR DUR build 2" << std::endl;
     const auto[true_rows, false_rows] = Calculations::partition(rows, question);
 		auto true_branch = buildTreeStandard(true_rows, meta);
     auto false_branch = buildTreeStandard(false_rows, meta);
-		return std::make_unique<Node> (std::move(true_branch), std::move(false_branch), question);
+		return Node(std::move(true_branch), std::move(false_branch), question);
 
 }
 
