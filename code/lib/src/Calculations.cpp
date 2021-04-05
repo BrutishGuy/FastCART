@@ -217,8 +217,9 @@ std::tuple<std::string, double> Calculations::determine_best_threshold_cat(const
 		
 	// now we iterate over each class instance (parallelizable) and determine which class
 	// holds the minimal gini update value for the information gain calculation later
+	std::vector<std::string> keys_ht;
 	#pragma omp parallel for num_threads(5)
-	for(ClassCounter::iterator datIt = std::begin(incrementalCategoryCounts); datIt != std::end(incrementalCategoryCounts); datIt++) {
+	for(ClassCounter::iterator datIt = std::begin(incrementalCategoryCounts); datIt < std::end(incrementalCategoryCounts); datIt++) {
 	#pragma omp cancellation point parallel
 	//for (const auto& [category, catSize]: incrementalCategoryCounts) {
 		// first compare change in gini value - we don't compare IG, since this is constance to S
