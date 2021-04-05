@@ -179,7 +179,7 @@ void reduce_classcounter(\
     ClassCounter& input)
 {
     for (auto& X : input) {
-		if (output.find(category) == output.end()) {
+		if (output.find(X.first) == output.end()) {
 			output[X.first] = X.second;
 		} else {
 			output.at(X.first) += X.second; //Will throw if X.first doesn't exist in output.
