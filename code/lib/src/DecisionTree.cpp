@@ -52,15 +52,59 @@ const Node DecisionTree::buildTree(const Data& rows, const MetaData& meta) {
     //auto false_branch = buildTree(false_rows, meta);
 		Node *true_branch = new Node;
 		Node *false_branch = new Node;
-		std::thread buildTrueTree([this, &true_rows, &meta, true_branch]() {
-				*true_branch = buildTree(true_rows, meta);
-		});
-		std::thread buildFalseTree([this, &false_rows, &meta, false_branch]() {
-				*false_branch = buildTree(false_rows, meta);
-		});
+		
+		if (rows.size() < 500) {
+			std::thread buildTrueTree([this, &true_rows, &meta, true_branch]() {
+					*true_branch = buildTreeStandard(true_rows, meta);
+			});
+			std::thread buildFalseTree([this, &false_rows, &meta, false_branch]() {
+					*false_branch = buildTreeStandard(false_rows, meta);
+			});	
+		} else {
+			std::thread buildTrueTree([this, &true_rows, &meta, true_branch]() {
+					*true_branch = buildTree(true_rows, meta);
+			});
+			std::thread buildFalseTree([this, &false_rows, &meta, false_branch]() {
+					*false_branch = buildTree(false_rows, meta);
+			});
+		}
 
 		buildTrueTree.join();
 		buildFalseTree.join();
+
+		Node res = Node(*true_branch, *false_branch, question);
+		delete true_branch;
+		delete false_branch;
+		return res;
+
+}
+
+const Node DecisionTree::buildTreeStandard(const Data& rows, const MetaData& meta) {
+		//std::cout << "HUR DUR build INIT" << std::endl;
+    auto[gain, question] = Calculations::find_best_split(rows, meta);
+    if (IsAlmostEqual(gain, 0.0)) {
+		ClassCounter classCounter = Calculations::classCounts(rows);
+		Leaf leaf(classCounter);
+		Node leafNode(leaf);
+		return leafNode;
+    }
+		std::cout << "HUR DUR build 2" << std::endl;
+    const auto[true_rows, false_rows] = Calculations::partition(rows, question);
+    //auto true_branch = std::async(std::launch::async, &DecisionTree::buildTree, this, std::cref(true_rows), std::cref(meta));
+    //auto false_branch = std::async(std::launch::async, &DecisionTree::buildTree, this, std::cref(false_rows), std::cref(meta));
+		auto true_branch = buildTreeStandard(true_rows, meta);
+    auto false_branch = buildTreeStandard(false_rows, meta);
+		//Node *true_branch = new Node;
+		//Node *false_branch = new Node;
+		//std::thread buildTrueTree([this, &true_rows, &meta, true_branch]() {
+	//			*true_branch = buildTree(true_rows, meta);
+		//});
+		//std::thread buildFalseTree([this, &false_rows, &meta, false_branch]() {
+		//		*false_branch = buildTree(false_rows, meta);
+		//});
+
+		//buildTrueTree.join();
+		//buildFalseTree.join();
 
 		Node res = Node(*true_branch, *false_branch, question);
 		delete true_branch;
