@@ -134,37 +134,37 @@ std::tuple<std::string, double> Calculations::determine_best_threshold_numeric(c
 	ClassCounter bestTrueCounts;
 	ClassCounter bestFalseCounts;
 	std::string currentFeatureValue = sortedData.front().at(0);
-  for (std::vector<std::string> row : sortedData) {
+	for (std::vector<std::string> row : sortedData) {
         if (row.at(0) == currentFeatureValue) {
-					// add to the class counter where relevant
-          incrementalTrueClassCounts.at(row.back())++;
-					incrementalFalseClassCounts.at(row.back())--;
-					totalTrue += 1;
+			// add to the class counter where relevant
+			incrementalTrueClassCounts.at(row.back())++;
+			incrementalFalseClassCounts.at(row.back())--;
+			totalTrue += 1;
         } else {
-					// first compare change in gini value - we don't compare IG, since this is constance to S
-					// rather we want the minimal gini value for the split such that IG(S) - IG(S_new) is maximal
-					
-					const double trueGini = gini(incrementalTrueClassCounts, totalTrue);
-					const double falseGini = gini(incrementalFalseClassCounts, (totalSize-totalTrue));
-					const double currentGini = (trueGini * totalTrue + falseGini * (totalSize-totalTrue)) / totalSize;
+			// first compare change in gini value - we don't compare IG, since this is constance to S
+			// rather we want the minimal gini value for the split such that IG(S) - IG(S_new) is maximal
+			
+			const double trueGini = gini(incrementalTrueClassCounts, totalTrue);
+			const double falseGini = gini(incrementalFalseClassCounts, (totalSize-totalTrue));
+			const double currentGini = (trueGini * totalTrue + falseGini * (totalSize-totalTrue)) / totalSize;
 
-					if (currentGini < bestLoss) {
-							bestLoss = currentGini;
-							bestThresh = row.at(0);
-							bestTrueSize = totalTrue;
-							bestFalseSize = (totalSize-totalTrue);
-							bestTrueCounts = incrementalTrueClassCounts;
-							bestFalseCounts = incrementalFalseClassCounts;
-							if (IsAlmostEqual(bestLoss, 0.0))
-									break;
-					}
-					
-					// then add to the class counter where relevant
-					incrementalTrueClassCounts.at(row.back())++;
-					incrementalFalseClassCounts.at(row.back())--;	
+			if (currentGini < bestLoss) {
+					bestLoss = currentGini;
+					bestThresh = row.at(0);
+					bestTrueSize = totalTrue;
+					bestFalseSize = (totalSize-totalTrue);
+					bestTrueCounts = incrementalTrueClassCounts;
+					bestFalseCounts = incrementalFalseClassCounts;
+					if (IsAlmostEqual(bestLoss, 0.0))
+							break;
+			}
+			
+			// then add to the class counter where relevant
+			incrementalTrueClassCounts.at(row.back())++;
+			incrementalFalseClassCounts.at(row.back())--;	
 
-					// update the current feature value being tracked against
-					currentFeatureValue = row.at(0);
+			// update the current feature value being tracked against
+			currentFeatureValue = row.at(0);
         }
   }
 	//std::cout << "Whoop whoop6" << std::endl;	
@@ -173,6 +173,38 @@ std::tuple<std::string, double> Calculations::determine_best_threshold_numeric(c
 
   return forward_as_tuple(bestThresh, bestLoss);
 }
+
+void reduce_classcounter(\
+    ClassCounter& output, \
+    ClassCounter& input)
+{
+    for (auto& X : input) {
+      output.at(X.first) += X.second; //Will throw if X.first doesn't exist in output. 
+    }
+}
+
+#pragma omp declare reduction(reduce_classcounter : \
+    ClassCounter : \
+    reduce_classcounter(omp_out, omp_in)) \
+    initializer(omp_priv(omp_orig))
+
+void reduce_classcatcounter(\
+    ClassCounterPerCategory& output, \
+    ClassCounterPerCategory& input)
+{
+    for (const auto& [category, catSize]: input) {
+		ClassCounter input_temp = input[category];
+		ClassCounter output_temp = output[category];
+		for (auto& X : input_temp) {
+			output_temp.at(X.first) += X.second; //Will throw if X.first doesn't exist in output. 
+		}
+    }
+}
+
+#pragma omp declare reduction(reduce_classcatcounter : \
+    ClassCounterPerCategory : \
+    reduce_classcatcounter(omp_out, omp_in)) \
+    initializer(omp_priv(omp_orig))
 
 std::tuple<std::string, double> Calculations::determine_best_threshold_cat(const Data& data, int col) {
   double bestLoss = std::numeric_limits<float>::infinity();
@@ -185,14 +217,20 @@ std::tuple<std::string, double> Calculations::determine_best_threshold_cat(const
 	ClassCounter incrementalCategoryCounts;
 	ClassCounterPerCategory incrementalTrueClassCountsPerCategory;
 	ClassCounterPerCategory incrementalFalseClassCountsPerCategory;
-	
+	ClassCounter incrementalTrueClassCounts;
+	ClassCounter incrementalFalseClassCounts;
+	for (const auto& [decision, freq]: totalClassCounts) {
+		incrementalTrueClassCounts[decision] = 0;
+		incrementalFalseClassCounts[decision] = freq;
+	}
 	//tracker variables 
 	double bestTrueSize;
 	double bestFalseSize;
 	ClassCounter bestTrueCounts;
 	ClassCounter bestFalseCounts;
-	
-  for (std::vector<std::string> row : data) {
+	#pragma omp parallel for reduction(reduce_classcounter:incrementalCategoryCounts) reduction(reduce_classcatcounter:incrementalTrueClassCountsPerCategory, incrementalFalseClassCountsPerCategory)
+	for (int i = 0; i < data.size; i++) {
+		std::vector<std::string> row = data.get(i);
 		std::string decision = row.at(col);
 		std::string outcome = row.back();
     if (incrementalCategoryCounts.find(decision) != std::end(incrementalCategoryCounts)) {
@@ -201,47 +239,39 @@ std::tuple<std::string, double> Calculations::determine_best_threshold_cat(const
 			incrementalFalseClassCountsPerCategory[decision][outcome]--;
     } else {
 			incrementalCategoryCounts[decision] += 1;
-			ClassCounter incrementalTrueClassCounts;
-			ClassCounter incrementalFalseClassCounts;
-			for (const auto& [decision, freq]: totalClassCounts) {
-				incrementalTrueClassCounts[decision] = 0;
-				incrementalFalseClassCounts[decision] = freq;
-			}
-			incrementalTrueClassCounts[outcome] += 1;
-			incrementalFalseClassCounts[outcome] -= 1;
 			incrementalTrueClassCountsPerCategory[decision] = incrementalTrueClassCounts;
 			incrementalFalseClassCountsPerCategory[decision] = incrementalFalseClassCounts;
+			incrementalTrueClassCountsPerCategory[decision][outcome]++;
+			incrementalFalseClassCountsPerCategory[decision][outcome]--;
     }    
 			
   }
 		
 	// now we iterate over each class instance (parallelizable) and determine which class
 	// holds the minimal gini update value for the information gain calculation later
-	std::vector<std::string> keys_ht;
-	#pragma omp parallel for num_threads(5)
-	for(ClassCounter::iterator datIt = std::begin(incrementalCategoryCounts); datIt < std::end(incrementalCategoryCounts); datIt++) {
-	#pragma omp cancellation point parallel
-	//for (const auto& [category, catSize]: incrementalCategoryCounts) {
+	
+	//for(ClassCounter::iterator datIt = std::begin(incrementalCategoryCounts); datIt < std::end(incrementalCategoryCounts); datIt++) {
+	for (const auto& [category, catSize]: incrementalCategoryCounts) {
 		// first compare change in gini value - we don't compare IG, since this is constance to S
 		// rather we want the minimal gini value for the split such that IG(S) - IG(S_new) is maximal
 		
-		ClassCounter incrementalTrueClassCounts = incrementalTrueClassCountsPerCategory[datIt->first];
-		ClassCounter incrementalFalseClassCounts = incrementalFalseClassCountsPerCategory[datIt->first];
-		double totalTrue = datIt->second;
+		ClassCounter incrementalTrueClassCounts = incrementalTrueClassCountsPerCategory[category];
+		ClassCounter incrementalFalseClassCounts = incrementalFalseClassCountsPerCategory[category];
+		double totalTrue = catSize;
 		const double trueGini = gini(incrementalTrueClassCounts, totalTrue);
 		const double falseGini = gini(incrementalFalseClassCounts, (totalSize-totalTrue));
 		const double currentGini = (trueGini * totalTrue + falseGini * (totalSize-totalTrue)) / totalSize;
-		#pragma omp critical
 		if (currentGini < bestLoss) {
 				bestLoss = currentGini;
-				bestThresh = datIt->first;
+				bestThresh = category;
 				bestTrueSize = totalTrue;
 				bestFalseSize = (totalSize-totalTrue);
 				bestTrueCounts = incrementalTrueClassCounts;
 				bestFalseCounts = incrementalFalseClassCounts;
 				
 				if (IsAlmostEqual(bestLoss, 0.0)) {
-					#pragma omp cancel parallel
+					//#pragma omp cancel parallel
+					break;
 				}
 		}
 	}
