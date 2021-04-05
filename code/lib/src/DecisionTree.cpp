@@ -31,18 +31,18 @@ DecisionTree::DecisionTree(const DataReader &dr, const std::vector<size_t> &samp
         sample_data.emplace_back(std::move(dr_.trainData().at(index)));
     }
 	
-	root_ = buildTree(sample_data, dr_.metaData());
+		root_ = buildTree(sample_data, dr_.metaData());
     std::cout << "Done with building tree as part of bagging.... " << timer.format() << std::endl;
 }
 
-const Node DecisionTree::buildTree(const Data& rows, const MetaData& meta) {
+std::unique_ptr<Node> DecisionTree::buildTree(const Data& rows, const MetaData& meta) {
 		//std::cout << "HUR DUR build INIT" << std::endl;
     auto[gain, question] = Calculations::find_best_split(rows, meta);
     if (IsAlmostEqual(gain, 0.0)) {
-		ClassCounter classCounter = Calculations::classCounts(rows);
-		Leaf leaf(classCounter);
-		Node leafNode(leaf);
-		return leafNode;
+			ClassCounter classCounter = Calculations::classCounts(rows);
+			Leaf leaf(classCounter);
+			Node leafNode(leaf);
+			return leafNode;
     }
 		std::cout << "HUR DUR build 1" << std::endl;
     const auto[true_rows, false_rows] = Calculations::partition(rows, question);
@@ -53,7 +53,8 @@ const Node DecisionTree::buildTree(const Data& rows, const MetaData& meta) {
 		Node *true_branch = new Node;
 		Node *false_branch = new Node;
 		
-		if (rows.size() < 500) {
+		if (rows.size() < 5000) {
+			std::cout << "Going down" << std::endl;
 			std::thread buildTrueTree([this, &true_rows, &meta, true_branch]() {
 					*true_branch = buildTreeStandard(true_rows, meta);
 			});
@@ -72,44 +73,27 @@ const Node DecisionTree::buildTree(const Data& rows, const MetaData& meta) {
 		buildTrueTree.join();
 		buildFalseTree.join();
 
-		Node res = Node(*true_branch, *false_branch, question);
+		std::unique_ptr<Node>  res = std::unique_ptr<Node> (*true_branch, *false_branch, question);
 		delete true_branch;
 		delete false_branch;
 		return res;
 
 }
 
-const Node DecisionTree::buildTreeStandard(const Data& rows, const MetaData& meta) {
+std::unique_ptr<Node>  DecisionTree::buildTreeStandard(const Data& rows, const MetaData& meta) {
 		//std::cout << "HUR DUR build INIT" << std::endl;
     auto[gain, question] = Calculations::find_best_split(rows, meta);
     if (IsAlmostEqual(gain, 0.0)) {
-		ClassCounter classCounter = Calculations::classCounts(rows);
-		Leaf leaf(classCounter);
-		Node leafNode(leaf);
-		return leafNode;
+			ClassCounter classCounter = Calculations::classCounts(rows);
+			Leaf leaf(classCounter);
+			Node leafNode(leaf);
+			return leafNode;
     }
 		std::cout << "HUR DUR build 2" << std::endl;
     const auto[true_rows, false_rows] = Calculations::partition(rows, question);
-    //auto true_branch = std::async(std::launch::async, &DecisionTree::buildTree, this, std::cref(true_rows), std::cref(meta));
-    //auto false_branch = std::async(std::launch::async, &DecisionTree::buildTree, this, std::cref(false_rows), std::cref(meta));
 		auto true_branch = buildTreeStandard(true_rows, meta);
     auto false_branch = buildTreeStandard(false_rows, meta);
-		//Node *true_branch = new Node;
-		//Node *false_branch = new Node;
-		//std::thread buildTrueTree([this, &true_rows, &meta, true_branch]() {
-	//			*true_branch = buildTree(true_rows, meta);
-		//});
-		//std::thread buildFalseTree([this, &false_rows, &meta, false_branch]() {
-		//		*false_branch = buildTree(false_rows, meta);
-		//});
-
-		//buildTrueTree.join();
-		//buildFalseTree.join();
-
-		Node res = Node(*true_branch, *false_branch, question);
-		delete true_branch;
-		delete false_branch;
-		return res;
+		return std::unique_ptr<Node> (std::move(true_branch), std::move(false_branch), question);
 
 }
 
