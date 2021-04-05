@@ -39,6 +39,10 @@ const Data sort_numeric_data(const Data &data, int col);
 
 bool comparator(VecS &row1, VecS &row2);
 
+void reduce_classcounter(ClassCounter& output, ClassCounter& input)
+
+void reduce_classcatcounter(ClassCounterPerCategory& output, ClassCounterPerCategory& input)
+
 } // namespace Calculations
 
 #endif //DECISIONTREE_CALCULATIONS_HPP
