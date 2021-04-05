@@ -194,9 +194,16 @@ void reduce_classcatcounter(\
 {
     for (const auto& [category, catSize]: input) {
 		ClassCounter input_temp = input[category];
-		ClassCounter output_temp = output[category];
-		for (auto& X : input_temp) {
-			output_temp.at(X.first) += X.second; //Will throw if X.first doesn't exist in output. 
+		ClassCounter output_temp;
+		if (output.find(category) == output.end()) {
+			for (const auto& [classvalue, classcount]: input_temp) {
+				output_temp[classvalue] = classcount;
+			}
+			output[category] = output_temp;
+		} else {		
+			for (auto& X : input_temp) {
+				output[category].at(X.first) += X.second; //Will throw if X.first doesn't exist in output. 
+			}
 		}
     }
 }
