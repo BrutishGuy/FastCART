@@ -41,8 +41,7 @@ std::unique_ptr<Node> DecisionTree::buildTree(const Data& rows, const MetaData& 
     if (IsAlmostEqual(gain, 0.0)) {
 			ClassCounter classCounter = Calculations::classCounts(rows);
 			Leaf leaf(classCounter);
-			Node leafNode(leaf);
-			return leafNode;
+			return std::unique_ptr<Node>(leaf);
     }
 		std::cout << "HUR DUR build 1" << std::endl;
     const auto[true_rows, false_rows] = Calculations::partition(rows, question);
@@ -61,6 +60,8 @@ std::unique_ptr<Node> DecisionTree::buildTree(const Data& rows, const MetaData& 
 			std::thread buildFalseTree([this, &false_rows, &meta, false_branch]() {
 					*false_branch = buildTreeStandard(false_rows, meta);
 			});	
+			buildTrueTree.join();
+			buildFalseTree.join();
 		} else {
 			std::thread buildTrueTree([this, &true_rows, &meta, true_branch]() {
 					*true_branch = buildTree(true_rows, meta);
@@ -68,10 +69,11 @@ std::unique_ptr<Node> DecisionTree::buildTree(const Data& rows, const MetaData& 
 			std::thread buildFalseTree([this, &false_rows, &meta, false_branch]() {
 					*false_branch = buildTree(false_rows, meta);
 			});
+			buildTrueTree.join();
+			buildFalseTree.join();
 		}
 
-		buildTrueTree.join();
-		buildFalseTree.join();
+
 
 		std::unique_ptr<Node>  res = std::unique_ptr<Node> (*true_branch, *false_branch, question);
 		delete true_branch;
