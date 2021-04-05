@@ -219,6 +219,7 @@ std::tuple<std::string, double> Calculations::determine_best_threshold_cat(const
 	// holds the minimal gini update value for the information gain calculation later
 	#pragma omp parallel for num_threads(5)
 	for(ClassCounter::iterator datIt = std::begin(incrementalCategoryCounts); datIt != std::end(incrementalCategoryCounts); datIt++) {
+	#pragma omp cancellation point parallel
 	//for (const auto& [category, catSize]: incrementalCategoryCounts) {
 		// first compare change in gini value - we don't compare IG, since this is constance to S
 		// rather we want the minimal gini value for the split such that IG(S) - IG(S_new) is maximal
@@ -237,8 +238,10 @@ std::tuple<std::string, double> Calculations::determine_best_threshold_cat(const
 				bestFalseSize = (totalSize-totalTrue);
 				bestTrueCounts = incrementalTrueClassCounts;
 				bestFalseCounts = incrementalFalseClassCounts;
-				if (IsAlmostEqual(bestLoss, 0.0))
-						break;
+				
+				if (IsAlmostEqual(bestLoss, 0.0)) {
+					#pragma omp cancel parallel
+				}
 		}
 	}
 	//std::cout << "Whoop whoop5" << std::endl;
