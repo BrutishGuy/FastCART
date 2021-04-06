@@ -50,8 +50,8 @@ const Node DecisionTree::buildTree(const Data& rows, const MetaData& meta) {
 		//int depth = 0;
     //auto true_branch = std::async(std::launch::async, &DecisionTree::buildTreeStandard, this, std::cref(true_rows), std::cref(meta), std::cref(depth));
     //auto false_branch = std::async(std::launch::async, &DecisionTree::buildTreeStandard, this, std::cref(false_rows), std::cref(meta), std::cref(depth));
-		Data true_data;
-		Data false_data;
+		static Data true_data; 
+		static Data false_data;
 		true_data.reserve(rows.size());
 		false_data.reserve(rows.size());
 		Calculations::partition(rows, question, true_data, false_data);
