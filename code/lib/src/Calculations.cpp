@@ -62,7 +62,7 @@ tuple<const double, const Question> Calculations::find_best_split(const Data& ro
 		//ClassCounter candidateTrueCounts = overall_counts;
 		//ClassCounter candidateFalseCounts = overall_counts;
 		//tuple<std::string, double> bestThreshAndLoss;
-		//std::cout << "Whoop whoop0" << std::endl;
+		std::cout << "Here I go" << std::endl;
 		if (colType.compare("categorical") == 0) {
 			auto[candidateThresh, candidateGain] = determine_best_threshold_cat(rows, column);
 			//if (candidateTrueSize == 0 || candidateFalseSize == 0)
@@ -73,9 +73,11 @@ tuple<const double, const Question> Calculations::find_best_split(const Data& ro
 			#pragma omp critical
 			{
 				if (candidateGain >= bestGain) {
+					std::cout << "Here I go killing again" << std::endl;
 					const Question q(column, candidateThresh);
 					bestGain = candidateGain;
 					bestQuestion = q;
+					
 				}
 			}
 		} else {
@@ -88,6 +90,7 @@ tuple<const double, const Question> Calculations::find_best_split(const Data& ro
 			#pragma omp critical
 			{
 				if (candidateGain >= bestGain) {
+					std::cout << "Here I go killing again" << std::endl;
 					const Question q(column, candidateThresh);
 					bestGain = candidateGain;
 					bestQuestion = q;
