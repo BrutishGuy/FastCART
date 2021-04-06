@@ -19,6 +19,8 @@ using boost::timer::cpu_timer;
 DecisionTree::DecisionTree(const DataReader& dr) : root_(Node()), dr_(dr) {
   std::cout << "Start building tree." << std::endl; cpu_timer timer;
   root_ = buildTree(dr_.trainData(), dr_.metaData());
+	unsigned int numThreads = std::thread::hardware_concurrency();
+	std::cout << "Number of threads: " << numThreads << std::endl;
   std::cout << "Done. " << timer.format() << std::endl;
 }
 
