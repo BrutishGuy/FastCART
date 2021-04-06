@@ -78,8 +78,10 @@ const Node DecisionTree::buildTreeStandard(const Data& rows, const MetaData& met
 			Leaf leaf(classCounter);
 			return Node(leaf);
     }
-		
-    const auto[true_rows, false_rows] = Calculations::partition(rows, question);
+		Data true_data;
+		Data false_data;
+    //const auto[true_rows, false_rows] = Calculations::partition(rows, question);
+		Calculations::partition(rows, question, true_data, false_data);
 		depth += 1;
 		//std::cout << depth << std::endl;
 		auto true_branch = buildTreeStandard(true_rows, meta, depth);

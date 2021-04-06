@@ -33,7 +33,7 @@ using std::unordered_map;
 }
  */
  
- void Calculations::partition(const Data &data, const Question &q, Data &trueData, Data &falseData) {
+void Calculations::partition(const Data &data, const Question &q, Data &trueData, Data &falseData) {
     for (const auto &row: data) {
         if (q.solve(row))
             trueData.emplace_back(std::move(row));
