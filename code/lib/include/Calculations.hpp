@@ -21,7 +21,7 @@ using ClassCounterPerCategory = std::unordered_map<std::string, ClassCounter>;  
 
 namespace Calculations {
 
-std::tuple<const Data, const Data> partition(const Data &data, const Question &q);
+void calculations::partition(const Data &data, const Question &q, Data &trueData, Data &falseData)
 
 const double gini(const ClassCounter& counts, double N);
 
