@@ -84,8 +84,8 @@ const Node DecisionTree::buildTreeStandard(const Data& rows, const MetaData& met
 		Calculations::partition(rows, question, true_data, false_data);
 		depth += 1;
 		//std::cout << depth << std::endl;
-		auto true_branch = buildTreeStandard(true_rows, meta, depth);
-    auto false_branch = buildTreeStandard(false_rows, meta, depth);
+		auto true_branch = buildTreeStandard(true_data, meta, depth);
+    auto false_branch = buildTreeStandard(false_data, meta, depth);
 		return Node(std::move(true_branch), std::move(false_branch), question);
 
 }
