@@ -44,50 +44,34 @@ const Node DecisionTree::buildTree(const Data& rows, const MetaData& meta) {
 			Leaf leaf(classCounter);
 			return Node(leaf);
     }
-		//std::cout << "HUR DUR build 1" << std::endl;
-    const auto[true_rows, false_rows] = Calculations::partition(rows, question);
-		int depth = 0;
-    auto true_branch = std::async(std::launch::async, &DecisionTree::buildTreeStandard, this, std::cref(true_rows), std::cref(meta), std::cref(depth));
-    auto false_branch = std::async(std::launch::async, &DecisionTree::buildTreeStandard, this, std::cref(false_rows), std::cref(meta), std::cref(depth));
-		
-		return Node(true_branch.get(), false_branch.get(), question);
-		
-		//auto true_branch = buildTree(true_rows, meta);
-    //auto false_branch = buildTree(false_rows, meta);
-		/* Node *true_branch = new Node;
+		std::cout << "HUR DUR build 1" << std::endl;
+    //const auto[true_rows, false_rows] = Calculations::partition(rows, question);
+		//int depth = 0;
+    //auto true_branch = std::async(std::launch::async, &DecisionTree::buildTreeStandard, this, std::cref(true_rows), std::cref(meta), std::cref(depth));
+    //auto false_branch = std::async(std::launch::async, &DecisionTree::buildTreeStandard, this, std::cref(false_rows), std::cref(meta), std::cref(depth));
+		Data true_data;
+		Data false_data;
+		Calculations::partition(rows, question, true_data, false_data);
+		Node *true_branch = new Node;
 		Node *false_branch = new Node;
-		
-		if (rows.size() < 5000) {
-			std::cout << "Going down" << std::endl;
-			std::thread buildTrueTree([this, &true_rows, &meta, true_branch]() {
-					*true_branch = buildTreeStandard(true_rows, meta);
-			});
-			std::thread buildFalseTree([this, &false_rows, &meta, false_branch]() {
-					*false_branch = buildTreeStandard(false_rows, meta);
-			});	
-			buildTrueTree.join();
-			buildFalseTree.join();
-		} else {
-			std::thread buildTrueTree([this, &true_rows, &meta, true_branch]() {
-					*true_branch = buildTree(true_rows, meta);
-			});
-			std::thread buildFalseTree([this, &false_rows, &meta, false_branch]() {
-					*false_branch = buildTree(false_rows, meta);
-			});
-			buildTrueTree.join();
-			buildFalseTree.join();
-		}
+		std::thread buildTrueTree([this, &true_data, &meta, true_branch]() {
+				*true_branch = buildTree(true_data, meta);
+		});
+		std::thread buildFalseTree([this, &false_data, &meta, false_branch]() {
+				*false_branch = buildTree(false_data, meta);
+		});
 
+		buildTrueTree.join();
+		buildFalseTree.join();
 
-
-		return Node(*true_branch, *false_branch, question); */
-		//delete true_branch;
-		//delete false_branch;
-
+		Node res = Node(*true_branch, *false_branch, question);
+		delete true_branch;
+		delete false_branch;
+		return res;
+//return Node(true_branch.get(), false_branch.get(), question);
 }
 
 const Node DecisionTree::buildTreeStandard(const Data& rows, const MetaData& meta, int depth) {
-		//std::cout << "HUR DUR build INIT" << std::endl;
     auto[gain, question] = Calculations::find_best_split(rows, meta);
     if (IsAlmostEqual(gain, 0.0)) {
 			ClassCounter classCounter = Calculations::classCounts(rows);
@@ -97,7 +81,7 @@ const Node DecisionTree::buildTreeStandard(const Data& rows, const MetaData& met
 		
     const auto[true_rows, false_rows] = Calculations::partition(rows, question);
 		depth += 1;
-		std::cout << depth << std::endl;
+		//std::cout << depth << std::endl;
 		auto true_branch = buildTreeStandard(true_rows, meta, depth);
     auto false_branch = buildTreeStandard(false_rows, meta, depth);
 		return Node(std::move(true_branch), std::move(false_branch), question);

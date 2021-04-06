@@ -18,7 +18,7 @@ using std::vector;
 using std::string;
 using std::unordered_map;
 
-tuple<const Data, const Data> Calculations::partition(const Data& data, const Question& q) {
+/* tuple<const Data, const Data> Calculations::partition(const Data& data, const Question& q) {
   Data true_rows;
   Data false_rows;
   
@@ -31,7 +31,16 @@ tuple<const Data, const Data> Calculations::partition(const Data& data, const Qu
 
   return forward_as_tuple(true_rows, false_rows);
 }
-
+ */
+ 
+ void calculations::partition(const Data &data, const Question &q, Data &trueData, Data &falseData)) {
+    for (const auto &row: data) {
+        if (q.solve(row))
+            trueData.emplace_back(std::move(row));
+        else
+            falseData.emplace_back(std::move(row));
+    }
+}
 
 tuple<const double, const Question> Calculations::find_best_split(const Data& rows, const MetaData& meta) {
   double bestGain = 0.0;  // keep track of the best information gain
